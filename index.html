@@ -100,6 +100,8 @@
       text-shadow: 0 1px 10px rgba(155, 146, 255, .65);
     }
 
+    #answer[data-idle="true"] { font-size: 3.2rem; }
+
     button {
       min-height: 54px;
       padding: 0 28px;
@@ -139,7 +141,7 @@
 
     <div class="ball-wrap">
       <div class="ball" id="ball" aria-label="Magic 8 Ball">
-        <div class="window"><p id="answer" aria-live="polite">8</p></div>
+        <div class="window"><p id="answer" data-idle="true" aria-live="polite">☺</p></div>
       </div>
     </div>
 
@@ -163,6 +165,7 @@
 
     askButton.addEventListener("click", () => {
       askButton.disabled = true;
+      answer.removeAttribute("data-idle");
       answer.textContent = "…";
       ball.classList.remove("is-rolling");
       // Restart the animation so every click gives the ball a fresh shake.
