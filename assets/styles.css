@@ -143,6 +143,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 /* Lists and ranking */
 .ranking-actions { margin-top: 14px; }
+.ranking-header-actions { display: flex; align-items: center; gap: 8px; }
 .visit-list { display: grid; gap: 10px; }
 .visit-row { display: grid; grid-template-columns: 54px 1fr auto; gap: 13px; align-items: center; padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--white); }
 .visit-row .mini-art { width: 54px; height: 54px; display: grid; place-items: center; border-radius: 7px; background: var(--card-bg); color: rgba(24,46,42,.75); font-family: var(--serif); font-size: 23px; }
@@ -157,6 +158,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .rank-number { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: #e7eadf; color: var(--green); font-family: var(--serif); font-size: 17px; }
 .rank-copy h3 { margin: 0; font-family: var(--serif); font-size: 18px; font-weight: 400; }
 .rank-copy p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
+.rank-visits { margin-top: 8px; color: var(--ink-soft); font-size: 10px; }
+.rank-visits summary { width: fit-content; color: var(--green); font-weight: 700; cursor: pointer; }
+.rank-visits ul { display: grid; gap: 6px; margin: 7px 0 0; padding: 0; list-style: none; }
+.rank-visits li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+.rank-visits li span { color: var(--muted); }
+.rank-visits .text-link { padding: 0; font-size: 10px; }
 .rank-controls { display: flex; gap: 4px; }
 .rank-controls button { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid #ded8cc; border-radius: 6px; background: transparent; color: var(--green); cursor: pointer; }
 .rank-controls button:hover:not(:disabled) { background: #e5eadf; }.rank-controls button:disabled { opacity: .35; cursor: not-allowed; }
@@ -242,6 +249,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .card-art { height: 110px; }
   .card-body h3, .card-body p { min-height: 0; }
   .section-heading { flex-direction: column; }
+  .section-heading .ranking-header-actions { width: 100%; justify-content: flex-end; }
   .section-heading h2 { font-size: 34px; }
   .toolbar { align-items: stretch; }
   .filter-row { order: 2; }

@@ -125,16 +125,15 @@
     const saved = state.wishlist.map((id) => byId.get(id)).filter(Boolean);
     const visited = uniqueVisitedIds();
     const ranked = state.ranking.length;
-    const greeting = state.displayName.trim() ? `Welcome back, ${escapeHtml(state.displayName.trim())}.` : "Your city, your kind of wonder.";
+    const greeting = "Find Smithsonian museums and rank the ones you love.";
     const preview = saved.length
       ? `<div class="home-saved-preview">${saved.slice(0, 2).map(cardMarkup).join("")}</div>`
       : emptyState("♡", "Nothing saved yet", "Save places you want to visit.", "Browse museums", "discover");
 
     return `<section class="hero" aria-labelledby="home-title">
       <div class="hero-copy">
-        <p class="eyebrow">Smithsonian museums · Washington, DC</p>
         <h1 id="home-title">Plan a museum day.<br><em>Rank your favorites.</em></h1>
-        <p>${greeting} Find places to visit, save them for later, and rank the ones you love.</p>
+        <p>${greeting}</p>
         <div class="hero-actions"><button class="button" type="button" data-view="discover">Explore museums <span class="icon" aria-hidden="true">→</span></button></div>
       </div>
       <div class="hero-art" aria-hidden="true"><span class="hero-sun"></span><span class="spark one">✦</span><span class="spark two">✧</span><span class="spark three">✦</span><div class="hero-building"><div class="building-roof"></div><div class="building-top"></div><div class="building-columns"><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="building-base"></div><div class="building-steps"></div></div></div>
@@ -150,7 +149,14 @@
   function filteredMuseums(view) {
     let list = museums;
     if (view === "wishlist") list = list.filter((museum) => state.wishlist.includes(museum.id));
-    if (activeCategory !== "All museums") list = list.filter((museum) => museum.category === activeCategory);
+    if (activeCategory !== "All museums") {
+      const categoryMatch = activeCategory === "Art"
+        ? (museum) => museum.category.startsWith("Art")
+        : activeCategory === "History"
+          ? (museum) => museum.category.includes("History")
+          : (museum) => museum.category.startsWith("Science");
+      list = list.filter(categoryMatch);
+    }
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       list = list.filter((museum) => `${museum.name} ${museum.shortName} ${museum.category} ${museum.area} ${museum.description}`.toLowerCase().includes(term));
@@ -161,15 +167,13 @@
   function renderDirectory(view) {
     const isWish = view === "wishlist";
     const title = isWish ? "Want to visit" : "Discover museums";
-    const desc = isWish
-      ? "Museums you have saved for later."
-      : "Explore Smithsonian museums across Washington, DC.";
+    const desc = "";
     const list = filteredMuseums(view);
     if (isWish && state.wishlist.length === 0) {
       return `${heading("Your shortlist", title, desc)}${emptyState("♡", "Nothing saved yet", "Browse the Smithsonian pilot directory and save a museum you would like to visit.", "Discover museums", "discover")}`;
     }
-    const filters = ["All museums", "Art & design", "Art & history", "History & culture", "Science & nature", "Science & technology"];
-    return `${heading(isWish ? "Saved for later" : "The DC pilot", title, desc)}
+    const filters = ["All museums", "Art", "History", "Science"];
+    return `${heading("", title, desc)}
       <div class="toolbar"><label class="search-box"><input class="search-input" id="museum-search" type="search" placeholder="Search by museum, topic, or neighborhood" value="${escapeHtml(searchTerm)}" aria-label="Search museums"></label>
         <div class="filter-row" role="group" aria-label="Filter museums by topic">${filters.map((filter) => `<button class="filter-chip ${activeCategory === filter ? "is-active" : ""}" type="button" data-action="category" data-category="${escapeHtml(filter)}" aria-pressed="${activeCategory === filter}">${escapeHtml(filter)}</button>`).join("")}</div>
       </div>
@@ -195,14 +199,16 @@
     const ranked = state.ranking.map((id) => byId.get(id)).filter(Boolean);
     const visitedIds = uniqueVisitedIds();
     const pending = visitedIds.filter((id) => !state.ranking.includes(id));
-    const rows = ranked.map((museum, index) => `<li class="rank-item"><span class="rank-number">${index + 1}</span><div class="rank-copy"><h3>${escapeHtml(museum.shortName)}</h3><p>${visitCountFor(museum.id)} visit${visitCountFor(museum.id) === 1 ? "" : "s"} · ${escapeHtml(museum.category)}</p></div><div class="rank-controls"><button type="button" data-action="move-rank" data-id="${museum.id}" data-direction="up" aria-label="Move ${escapeHtml(museum.shortName)} up" ${index === 0 ? "disabled" : ""}>↑</button><button type="button" data-action="move-rank" data-id="${museum.id}" data-direction="down" aria-label="Move ${escapeHtml(museum.shortName)} down" ${index === ranked.length - 1 ? "disabled" : ""}>↓</button></div></li>`).join("");
-    const action = pending.length ? `<button class="button small" type="button" data-action="start-ranking">Compare museums <span class="icon" aria-hidden="true">↗</span></button>` : "";
+    const rows = ranked.map((museum, index) => {
+      const visits = state.visits.filter((visit) => visit.museumId === museum.id).sort((a, b) => b.visitedOn.localeCompare(a.visitedOn));
+      const visitHistory = visits.length ? `<details class="rank-visits"><summary>${visits.length} visit${visits.length === 1 ? "" : "s"}</summary><ul>${visits.map((visit) => `<li><span>${dateLabel(visit.visitedOn)}${visit.note ? ` · ${escapeHtml(visit.note)}` : ""}</span><button class="text-link" type="button" data-action="delete-visit" data-id="${visit.id}" data-museum-id="${museum.id}">Remove</button></li>`).join("")}</ul></details>` : "";
+      return `<li class="rank-item"><span class="rank-number">${index + 1}</span><div class="rank-copy"><h3>${escapeHtml(museum.shortName)}</h3><p>${visits.length} visit${visits.length === 1 ? "" : "s"} · ${escapeHtml(museum.category)}</p>${visitHistory}</div><div class="rank-controls"><button type="button" data-action="move-rank" data-id="${museum.id}" data-direction="up" aria-label="Move ${escapeHtml(museum.shortName)} up" ${index === 0 ? "disabled" : ""}>↑</button><button type="button" data-action="move-rank" data-id="${museum.id}" data-direction="down" aria-label="Move ${escapeHtml(museum.shortName)} down" ${index === ranked.length - 1 ? "disabled" : ""}>↓</button></div></li>`;
+    }).join("");
+    const actions = `<div class="ranking-header-actions"><button class="button secondary small" type="button" data-action="open-visit"><span aria-hidden="true">＋</span> Log a visit</button>${ranked.length > 1 ? `<button class="button small" type="button" data-action="start-ranking">Compare again</button>` : ""}</div>`;
     const body = ranked.length
-      ? `<div class="ranking-main"><ol class="rank-list">${rows}</ol>${pending.length ? `<div class="rank-pending"><strong>${pending.length} visited museum${pending.length === 1 ? "" : "s"} ${pending.length === 1 ? "is" : "are"} still to place.</strong><br>Compare a new visit with a museum already on your list to find its spot.${action}</div>` : ranked.length > 1 ? `<div class="ranking-actions"><button class="button secondary small" type="button" data-action="start-ranking">Compare again</button></div>` : ""}</div>`
-      : visitedIds.length >= 2
-        ? `<div class="rank-pending"><strong>You have museums to compare.</strong><br>Choose which you enjoyed more, one pair at a time, and the list will find its order.<br><button class="button small" type="button" data-action="start-ranking">Build my ranking <span class="icon" aria-hidden="true">↗</span></button></div>`
-        : emptyState("↕", "Your ranking takes shape as you go", "Log visits to at least two different museums. Then compare them to start your personal ranking.", "Log a visit", "visits");
-    return `${heading("A list only you can make", "My ranking", "Put your museum experiences in order. No stars from strangers—just what felt right to you.")}${body}`;
+      ? `<div class="ranking-main"><ol class="rank-list">${rows}</ol>${pending.length ? `<div class="rank-pending"><strong>${pending.length} museum${pending.length === 1 ? "" : "s"} to place.</strong><br>Finish comparing your recent visits to update the ranking.<br><button class="button small" type="button" data-action="start-ranking">Continue ranking</button></div>` : ""}</div>`
+      : `<div class="empty-state"><span class="empty-symbol" aria-hidden="true">↕</span><h3>Your ranking starts with a visit</h3><p>Log a visit to add your first museum.</p><button class="button" type="button" data-action="open-visit">Log a visit</button></div>`;
+    return `${heading("", "My ranking", "", actions)}${body}`;
   }
 
   function renderProfile() {
@@ -219,7 +225,7 @@
     else if (currentView === "discover" || currentView === "wishlist") content.innerHTML = renderDirectory(currentView);
     else if (currentView === "ranking") content.innerHTML = renderRanking();
     else if (currentView === "profile") content.innerHTML = renderProfile();
-    else if (currentView === "visits") content.innerHTML = renderVisits();
+    else if (currentView === "visits") setView("ranking");
   }
 
   function toggleSave(id) {
@@ -251,7 +257,7 @@
   function openVisitDialog(museumId = "") {
     if (museumDialog.open) museumDialog.close();
     const options = museums.map((museum) => `<option value="${museum.id}" ${museum.id === museumId ? "selected" : ""}>${escapeHtml(museum.shortName)}</option>`).join("");
-    visitDialog.innerHTML = `<div class="dialog-inner"><button class="dialog-close" type="button" data-action="close-dialog" aria-label="Close visit form">×</button><p class="eyebrow">Make a note of it</p><h2 class="dialog-heading" id="visit-dialog-title">Log a museum visit</h2><p class="dialog-subtitle">A date and a quick note are enough. You can come back to this memory when you compare museums.</p>
+    visitDialog.innerHTML = `<div class="dialog-inner"><button class="dialog-close" type="button" data-action="close-dialog" aria-label="Close visit form">×</button><p class="eyebrow">Make a note of it</p><h2 class="dialog-heading" id="visit-dialog-title">Log a museum visit</h2><p class="dialog-subtitle">Add a date and note. You’ll rank this museum before you finish.</p>
       <form class="visit-form" id="visit-form"><label class="field">Museum<select name="museumId" required><option value="" disabled ${museumId ? "" : "selected"}>Choose a museum</option>${options}</select></label><label class="field">When did you visit?<input type="date" name="visitedOn" value="${today}" max="${today}" required></label><label class="field">Anything you want to remember?<textarea name="note" maxlength="500" placeholder="An exhibit, a feeling, a moment… (optional)"></textarea></label><div class="dialog-footer-actions"><button class="button secondary" type="button" data-action="close-dialog">Cancel</button><button class="button" type="submit">Save visit</button></div></form></div>`;
     visitDialog.showModal();
   }
@@ -268,7 +274,10 @@
       return;
     }
     if (queue.length === 0) {
-      showToast("Everything you've visited is already ranked. Use the arrows to adjust the order.");
+      if (state.ranking.length > 1) {
+        comparisonSession = { mode: "recompare", first: state.ranking[0], second: state.ranking[1] };
+        renderComparePair(byId.get(comparisonSession.first), byId.get(comparisonSession.second), "recompare");
+      } else showToast("Log a visit to another museum to compare your ranking.");
       return;
     }
     if (state.ranking.length === 0) {
@@ -312,15 +321,23 @@
   }
 
   function renderComparePair(first, second, mode) {
-    compareDialog.innerHTML = `<div class="dialog-inner"><button class="dialog-close" type="button" data-action="close-comparison" aria-label="Close comparison">×</button><p class="eyebrow">Your ranking · head to head</p><h2 class="dialog-heading" id="compare-dialog-title">Which visit did you enjoy more?</h2><p class="dialog-subtitle">There is no right answer. Choose the museum that felt more memorable to you.</p><div class="compare-pair">
+    compareDialog.innerHTML = `<div class="dialog-inner"><p class="eyebrow">Your ranking · head to head</p><h2 class="dialog-heading" id="compare-dialog-title">Which visit did you enjoy more?</h2><p class="dialog-subtitle">Choose the museum you enjoyed more to place it in your ranking.</p><div class="compare-pair">
       <button class="compare-choice accent-${first.accent}" type="button" data-action="choose-comparison" data-winner="${first.id}" data-mode="${mode}"><span class="choice-icon" aria-hidden="true">${escapeHtml(first.monogram)}</span><strong>${escapeHtml(first.shortName)}</strong></button><span class="versus">OR</span>
       <button class="compare-choice accent-${second.accent}" type="button" data-action="choose-comparison" data-winner="${second.id}" data-mode="${mode}"><span class="choice-icon" aria-hidden="true">${escapeHtml(second.monogram)}</span><strong>${escapeHtml(second.shortName)}</strong></button>
-      </div><div class="compare-actions"><button class="text-link" type="button" data-action="skip-comparison">I'm not sure yet</button></div></div>`;
+      </div></div>`;
     if (!compareDialog.open) compareDialog.showModal();
   }
 
   function chooseComparison(winnerId, mode) {
     if (!comparisonSession) return;
+    if (mode === "recompare") {
+      if (winnerId === comparisonSession.second) [state.ranking[0], state.ranking[1]] = [state.ranking[1], state.ranking[0]];
+      comparisonSession = null;
+      compareDialog.close();
+      saveState();
+      renderView();
+      return;
+    }
     if (mode === "seed") {
       const loserId = winnerId === comparisonSession.first ? comparisonSession.second : comparisonSession.first;
       state.ranking = [winnerId, loserId];
@@ -411,6 +428,10 @@
     if (actionButton) handleAction(actionButton);
   });
 
+  compareDialog.addEventListener("cancel", (event) => {
+    if (comparisonSession) event.preventDefault();
+  });
+
   document.addEventListener("input", (event) => {
     if (event.target.id === "museum-search") {
       searchTerm = event.target.value;
@@ -426,11 +447,16 @@
       const visitedOn = String(form.get("visitedOn"));
       const note = String(form.get("note") || "").trim();
       state.visits.push({ id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`, museumId, visitedOn, note });
+      if (!state.ranking.includes(museumId)) {
+        if (state.ranking.length === 0) state.ranking.push(museumId);
+        else comparisonSession = { mode: "insert", queue: [museumId], candidate: null, low: 0, high: 0, opponent: null };
+      }
       saveState();
       visitDialog.close();
       if (museumDialog.open) museumDialog.close();
       renderView();
-      showToast(`Visit to ${byId.get(museumId).shortName} saved.`);
+      if (comparisonSession) nextComparison();
+      else showToast(`Visit to ${byId.get(museumId).shortName} saved and ranked.`);
     }
     if (event.target.id === "profile-form") {
       event.preventDefault();
