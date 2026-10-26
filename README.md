@@ -19,7 +19,9 @@ The repository includes a GitHub Actions workflow for GitHub Pages. In the repos
 
 ## Pilot directory
 
-The initial directory covers 12 Smithsonian museum institutions in Washington, DC. Museum names, descriptions, locations, and official information links are based on the Smithsonian's [museum visitor directory](https://www.si.edu/visit/museums). Hours and admission requirements can change, so the app links back to official museum information.
+The initial directory covers 13 Smithsonian museum institutions in Washington, DC, including the National Zoo. Museum names, descriptions, locations, and official information links are based on the Smithsonian's [museum visitor directory](https://www.si.edu/visit/museums) and [National Zoo visitor information](https://nationalzoo.si.edu/visit). Hours and admission requirements can change, so the app links back to official museum information.
+
+Museum photos are from Wikimedia Commons. Each photo card shows its creator and links to its source and license; visit-list thumbnails link to the same usage details.
 
 ## Product scope
 
