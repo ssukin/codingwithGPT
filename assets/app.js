@@ -16,7 +16,18 @@
   let activeCategory = "All museums";
   let searchTerm = "";
   let comparisonSession = null;
+  let discoverDisplay = "list";
+  let mapInstance = null;
+  let mapMarkers = null;
+  let userMarker = null;
+  let userLocation = null;
   let toastTimer;
+
+  const demoFriends = [
+    { name: "Alex", ranking: ["natural-history", "air-and-space", "american-history", "national-zoo"] },
+    { name: "Jordan", ranking: ["american-history", "african-american-history", "african-art", "natural-history"] },
+    { name: "Sam", ranking: ["national-zoo", "natural-history", "hirshhorn", "american-history"] }
+  ];
 
   function loadState() {
     try {
@@ -58,6 +69,16 @@
 
   function visitCountFor(id) {
     return state.visits.filter((visit) => visit.museumId === id).length;
+  }
+
+  function distanceMiles(from, to) {
+    const radians = (degrees) => degrees * Math.PI / 180;
+    const [lat1, lon1] = from.map(radians);
+    const [lat2, lon2] = to.map(radians);
+    const deltaLat = lat2 - lat1;
+    const deltaLon = lon2 - lon1;
+    const haversine = Math.sin(deltaLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLon / 2) ** 2;
+    return 3958.8 * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
   }
 
   function updateHeader() {
@@ -167,18 +188,77 @@
   function renderDirectory(view) {
     const isWish = view === "wishlist";
     const title = isWish ? "Want to visit" : "Discover museums";
-    const desc = "";
     const list = filteredMuseums(view);
     if (isWish && state.wishlist.length === 0) {
-      return `${heading("Your shortlist", title, desc)}${emptyState("♡", "Nothing saved yet", "Browse the Smithsonian pilot directory and save a museum you would like to visit.", "Discover museums", "discover")}`;
+      return `${heading("", title, "")}${emptyState("♡", "Nothing saved yet", "Browse museums and save one for later.", "Discover museums", "discover")}`;
     }
     const filters = ["All museums", "Art", "History", "Science"];
-    return `${heading("", title, desc)}
+    const viewToggle = !isWish ? `<div class="directory-actions"><div class="view-toggle" role="group" aria-label="Discover display"><button class="${discoverDisplay === "list" ? "is-active" : ""}" type="button" data-action="discover-display" data-display="list" aria-pressed="${discoverDisplay === "list"}">List</button><button class="${discoverDisplay === "map" ? "is-active" : ""}" type="button" data-action="discover-display" data-display="map" aria-pressed="${discoverDisplay === "map"}">Map</button></div>${discoverDisplay === "map" ? `<button class="button secondary small" type="button" data-action="locate-me">Near me</button>` : ""}</div>` : "";
+    const results = list.length ? list.map(cardMarkup).join("") : emptyState("⌕", "No matches yet", "Try a different search or clear the topic filter.", "Clear filters", "clear-filters");
+    return `${heading("", title, "")}
       <div class="toolbar"><label class="search-box"><input class="search-input" id="museum-search" type="search" placeholder="Search by museum, topic, or neighborhood" value="${escapeHtml(searchTerm)}" aria-label="Search museums"></label>
-        <div class="filter-row" role="group" aria-label="Filter museums by topic">${filters.map((filter) => `<button class="filter-chip ${activeCategory === filter ? "is-active" : ""}" type="button" data-action="category" data-category="${escapeHtml(filter)}" aria-pressed="${activeCategory === filter}">${escapeHtml(filter)}</button>`).join("")}</div>
+        <div class="filter-row" role="group" aria-label="Filter museums by topic">${filters.map((filter) => `<button class="filter-chip ${activeCategory === filter ? "is-active" : ""}" type="button" data-action="category" data-category="${escapeHtml(filter)}" aria-pressed="${activeCategory === filter}">${escapeHtml(filter)}</button>`).join("")}</div>${viewToggle}
       </div>
       <p class="result-count" id="result-count">${list.length} museum${list.length === 1 ? "" : "s"}</p>
-      <div class="museum-grid" id="museum-grid">${list.length ? list.map(cardMarkup).join("") : emptyState("⌕", "No matches yet", "Try a different search or clear the topic filter.", "Clear filters", "clear-filters")}</div>`;
+      ${discoverDisplay === "map" && !isWish ? `${list.length ? `<div class="map-frame"><div id="museum-map" class="museum-map" aria-label="Map of Smithsonian museums"></div><div class="map-legend"><span class="legend-ranked">1</span> Your rank <span class="legend-unranked">•</span> Unranked</div></div>` : results}` : `<div class="museum-grid" id="museum-grid">${results}</div>`}`;
+  }
+
+  function renderFriends() {
+    const averageRanks = new Map();
+    demoFriends.forEach((friend) => friend.ranking.forEach((id, index) => {
+      const positions = averageRanks.get(id) || [];
+      positions.push(index + 1);
+      averageRanks.set(id, positions);
+    }));
+    const averages = [...averageRanks.entries()].map(([id, positions]) => ({ museum: byId.get(id), average: positions.reduce((sum, position) => sum + position, 0) / positions.length }))
+      .filter((item) => item.museum).sort((a, b) => a.average - b.average);
+    return `${heading("", "Friends", "")}<div class="friends-meta"><span>Prototype data</span><strong>Friends’ average ranking</strong></div>
+      <ol class="friends-average-list">${averages.map((item) => `<li><span class="average-rank">${item.average.toFixed(1)}</span><span>${escapeHtml(item.museum.shortName)}</span></li>`).join("")}</ol>
+      <div class="friends-list">${demoFriends.map((friend) => `<article class="friend-card"><div class="friend-heading"><span class="friend-avatar" aria-hidden="true">${friend.name[0]}</span><h3>${escapeHtml(friend.name)}</h3></div><ol>${friend.ranking.slice(0, 3).map((id) => `<li>${escapeHtml(byId.get(id)?.shortName || "Museum")}</li>`).join("")}</ol></article>`).join("")}</div>`;
+  }
+
+  function renderMap() {
+    const mapElement = document.querySelector("#museum-map");
+    if (!mapElement) return;
+    if (!window.L) {
+      mapElement.innerHTML = "<p class=\"map-unavailable\">Map unavailable. Check your internet connection.</p>";
+      return;
+    }
+    const locations = filteredMuseums("discover").filter((museum) => Array.isArray(museum.coordinates));
+    if (!locations.length) return;
+    mapInstance = window.L.map(mapElement, { scrollWheelZoom: false }).setView([38.895, -77.025], 13);
+    window.L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(mapInstance);
+    mapMarkers = window.L.featureGroup().addTo(mapInstance);
+    renderMapMarkers();
+    const bounds = mapMarkers.getBounds();
+    if (bounds.isValid()) mapInstance.fitBounds(bounds.pad(0.12), { maxZoom: 14 });
+    if (userLocation) addUserLocation();
+    window.setTimeout(() => mapInstance && mapInstance.invalidateSize(), 0);
+  }
+
+  function renderMapMarkers() {
+    if (!mapMarkers) return;
+    mapMarkers.clearLayers();
+    filteredMuseums("discover").filter((museum) => Array.isArray(museum.coordinates)).forEach((museum) => {
+      const rank = state.ranking.indexOf(museum.id);
+      const markerIcon = window.L.divIcon({ className: "", html: `<span class="map-marker ${rank >= 0 ? "is-ranked" : ""}">${rank >= 0 ? rank + 1 : "•"}</span>`, iconSize: [32, 32], iconAnchor: [16, 16] });
+      const rankLabel = rank >= 0 ? `Your rank: #${rank + 1}` : "Not ranked yet";
+      const distance = userLocation ? `<br>${distanceMiles(userLocation, museum.coordinates).toFixed(1)} mi away` : "";
+      const popup = `<strong>${escapeHtml(museum.shortName)}</strong><br>${rankLabel}${distance}<br><span>${escapeHtml(museum.area)}</span><br><a href="https://www.google.com/maps/dir/?api=1&destination=${museum.coordinates[0]}%2C${museum.coordinates[1]}" target="_blank" rel="noopener noreferrer">Directions</a>`;
+      window.L.marker(museum.coordinates, { icon: markerIcon }).bindPopup(popup).addTo(mapMarkers);
+    });
+  }
+
+  function addUserLocation() {
+    if (!mapInstance || !userLocation) return;
+    if (userMarker) userMarker.remove();
+    userMarker = window.L.circleMarker(userLocation, { radius: 8, color: "#fffdf8", weight: 3, fillColor: "#d9734d", fillOpacity: 1 }).bindPopup("You are here").addTo(mapInstance);
+    const bounds = mapMarkers.getBounds();
+    bounds.extend(userLocation);
+    mapInstance.fitBounds(bounds.pad(0.12), { maxZoom: 14 });
   }
 
   function renderVisits() {
@@ -220,12 +300,27 @@
   }
 
   function renderView() {
+    if (mapInstance) mapInstance.remove();
+    mapInstance = null;
+    mapMarkers = null;
+    userMarker = null;
     updateHeader();
     if (currentView === "home") content.innerHTML = renderHome();
     else if (currentView === "discover" || currentView === "wishlist") content.innerHTML = renderDirectory(currentView);
     else if (currentView === "ranking") content.innerHTML = renderRanking();
+    else if (currentView === "friends") content.innerHTML = renderFriends();
     else if (currentView === "profile") content.innerHTML = renderProfile();
     else if (currentView === "visits") setView("ranking");
+    if (currentView === "discover" && discoverDisplay === "map") renderMap();
+  }
+
+  function refreshDirectory() {
+    if (mapInstance) mapInstance.remove();
+    mapInstance = null;
+    mapMarkers = null;
+    userMarker = null;
+    content.innerHTML = renderDirectory(currentView);
+    if (currentView === "discover" && discoverDisplay === "map") renderMap();
   }
 
   function toggleSave(id) {
@@ -373,10 +468,15 @@
   function renderMuseumGrid() {
     const grid = document.querySelector("#museum-grid");
     const counter = document.querySelector("#result-count");
-    if (!grid || !counter) return;
+    if (!counter) return;
     const view = currentView;
     const list = filteredMuseums(view);
     counter.textContent = `${list.length} museum${list.length === 1 ? "" : "s"}`;
+    if (view === "discover" && discoverDisplay === "map") {
+      renderMapMarkers();
+      return;
+    }
+    if (!grid) return;
     grid.innerHTML = list.length ? list.map(cardMarkup).join("") : emptyState("⌕", "No matches yet", "Try a different search or clear the topic filter.", "Clear filters", "clear-filters");
   }
 
@@ -402,11 +502,24 @@
       renderView();
     } else if (action === "category") {
       activeCategory = button.dataset.category;
-      content.innerHTML = renderDirectory(currentView);
+      refreshDirectory();
+    } else if (action === "discover-display") {
+      discoverDisplay = button.dataset.display;
+      refreshDirectory();
+    } else if (action === "locate-me") {
+      if (!navigator.geolocation) {
+        showToast("Location is not available in this browser.");
+      } else {
+        navigator.geolocation.getCurrentPosition((position) => {
+          userLocation = [position.coords.latitude, position.coords.longitude];
+          renderMapMarkers();
+          addUserLocation();
+        }, () => showToast("Allow location access to see what is near you."), { enableHighAccuracy: false, timeout: 10000 });
+      }
     } else if (action === "clear-filters") {
       activeCategory = "All museums";
       searchTerm = "";
-      content.innerHTML = renderDirectory(currentView);
+      refreshDirectory();
     } else if (action === "clear-data") {
       if (window.confirm("Clear your saved list, visits, ranking, and profile from this browser? This cannot be undone.")) {
         state = { displayName: "", wishlist: [], visits: [], ranking: [] };
