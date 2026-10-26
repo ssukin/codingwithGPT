@@ -26,3 +26,5 @@ The initial directory covers 12 Smithsonian museum institutions in Washington, D
 The first web version includes the proposal's personal MVP: browse and search, museum details, a private Want to visit list, visit logging, head-to-head comparisons, and an editable ranking. Friends, map views, public sharing, recommendations, reviews, notifications, and monetization are deferred. Account sign-in and cross-device sync can be added in a later version.
 
 This repository is for Coding with GPT on Mondays and Tuesdays at 2:45–4:10 pm.
+
+This is an update (Gila).
