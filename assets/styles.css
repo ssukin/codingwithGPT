@@ -39,7 +39,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .nav-link { position: relative; display: inline-flex; align-items: center; gap: 7px; height: 100%; padding: 0 13px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #66736c; font-size: 13px; font-weight: 600; cursor: pointer; }
 .nav-link:hover, .nav-link.is-active { color: var(--ink); }
 .nav-link.is-active { border-bottom-color: var(--orange); }
-.nav-count { min-width: 19px; height: 19px; display: inline-grid; place-items: center; padding: 0 5px; border-radius: 99px; background: #e7e1d4; color: var(--ink-soft); font-size: 10px; }
 .profile-button { display: inline-flex; align-items: center; gap: 9px; padding: 7px 0 7px 8px; border: 0; background: transparent; cursor: pointer; }
 .profile-avatar { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid #c7c9a8; border-radius: 50%; background: #dfe5cf; color: var(--green-dark); font-family: var(--serif); font-size: 16px; }
 .profile-label { max-width: 100px; overflow: hidden; color: var(--ink-soft); font-size: 12px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
@@ -184,18 +183,23 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .rank-pending strong { color: #4e482f; }
 .rank-pending .button { margin-top: 10px; }
 .profile-card { max-width: 750px; padding: 25px; border: 1px solid var(--line); border-radius: 10px; background: var(--white); }
-.friends-meta { display: flex; align-items: center; gap: 10px; margin: 2px 0 11px; }
-.friends-meta strong { font-family: var(--serif); font-size: 20px; font-weight: 400; }
-.prototype-label { padding: 4px 7px; border-radius: 99px; background: #e7eadf; color: var(--green-dark); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
-.friends-average-list { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; margin: 0 0 25px; padding: 0; list-style: none; }
-.friends-average-list li { min-height: 64px; display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--white); font-size: 11px; }
-.average-rank { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; border-radius: 50%; background: #e7eadf; color: var(--green-dark); font: 17px var(--serif); }
-.friends-list { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
+.friends-mode-toggle { width: fit-content; margin: 0 0 18px auto; }
+.friends-average-list { display: grid; gap: 8px; max-width: 760px; margin: 0; padding: 0; list-style: none; }
+.friends-average-list li { min-height: 62px; display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--white); font-size: 12px; }
+.average-rank { background: hsl(var(--rank-hue), 55%, 31%); color: #fff; }
+.average-rank { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; border-radius: 50%; font: 17px var(--serif); }
+.average-value { color: var(--muted); font-size: 10px; }
+.friend-search { display: block; max-width: 400px; margin: 0 0 13px; }
+.friend-search .search-input { padding-left: 14px; }
+.friend-suggestions { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; margin-top: 12px; }
 .friend-card { padding: 15px; border: 1px solid var(--line); border-radius: 9px; background: var(--white); }
+.friend-card.is-suggested { border-style: dashed; }
 .friend-heading { display: flex; align-items: center; gap: 9px; }
-.friend-avatar { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: #e1e8d8; color: var(--green-dark); font: 16px var(--serif); }
 .friend-heading h3 { margin: 0; font: 20px var(--serif); }
-.friend-card ol { display: grid; gap: 6px; margin: 13px 0 0; padding-left: 27px; color: var(--muted); font-size: 11px; }
+.friend-visit-count { margin-left: auto; color: var(--muted); font-size: 10px; white-space: nowrap; }
+.friend-card .button { margin-top: 13px; }
+.friend-empty { grid-column: 1 / -1; margin: 0; padding: 18px; border: 1px dashed var(--line); border-radius: 8px; color: var(--muted); font-size: 12px; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
 .profile-card h3 { margin: 0 0 8px; font-family: var(--serif); font-size: 25px; font-weight: 400; }
 .profile-card p { margin: 0 0 18px; color: var(--muted); font-size: 12px; line-height: 1.6; }
 .profile-form { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
@@ -281,8 +285,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .filter-row { order: 2; }
   .search-box { width: 100%; }
   .museum-map { min-height: 350px; height: 58vh; }
-  .friends-average-list { grid-template-columns: repeat(2, minmax(0,1fr)); }
-  .friends-list { grid-template-columns: 1fr; }
+  .friend-suggestions { grid-template-columns: 1fr; }
   .visit-row { grid-template-columns: 46px 1fr; }.visit-row .mini-art { width: 46px; height: 46px; }
   .visit-row-actions { grid-column: 2; justify-self: start; }
   .rank-item { grid-template-columns: 34px 1fr auto; gap: 8px; padding: 9px; }
