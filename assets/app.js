@@ -92,9 +92,8 @@
     const saved = state.wishlist.includes(museum.id);
     const visits = visitCountFor(museum.id);
     return `<article class="museum-card accent-${museum.accent}">
-      <div class="card-art" aria-hidden="true">
-        <span class="card-monogram">${escapeHtml(museum.monogram)}</span>
-        <span class="card-icon">${escapeHtml(museum.icon)}</span>
+      <div class="card-art ${museum.photo ? "has-photo" : ""}">
+        ${museum.photo ? `<img class="card-photo" src="${escapeHtml(museum.photo)}" alt="" loading="lazy" decoding="async"><span class="photo-credit">Photo: <a href="${escapeHtml(museum.photoSource)}" target="_blank" rel="noopener noreferrer">${escapeHtml(museum.photoCredit)}</a> · <a href="${escapeHtml(museum.photoLicense)}" target="_blank" rel="noopener noreferrer">${escapeHtml(museum.photoLicenseLabel)}</a></span>` : `<span class="card-monogram" aria-hidden="true">${escapeHtml(museum.monogram)}</span><span class="card-icon" aria-hidden="true">${escapeHtml(museum.icon)}</span>`}
         <button class="save-toggle" type="button" data-action="toggle-save" data-id="${museum.id}" aria-label="${saved ? "Remove" : "Save"} ${escapeHtml(museum.shortName)} ${saved ? "from" : "to"} Want to visit" aria-pressed="${saved}">${saved ? "♥" : "♡"}</button>
       </div>
       <div class="card-body">
@@ -119,7 +118,7 @@
   }
 
   function heading(eyebrow, title, description, buttonMarkup = "") {
-    return `<div class="section-heading"><div><p class="eyebrow">${escapeHtml(eyebrow)}</p><h2>${escapeHtml(title)}</h2><p>${escapeHtml(description)}</p></div>${buttonMarkup}</div>`;
+    return `<div class="section-heading"><div>${eyebrow ? `<p class="eyebrow">${escapeHtml(eyebrow)}</p>` : ""}<h2>${escapeHtml(title)}</h2>${description ? `<p>${escapeHtml(description)}</p>` : ""}</div>${buttonMarkup}</div>`;
   }
 
   function renderHome() {
@@ -129,14 +128,14 @@
     const greeting = state.displayName.trim() ? `Welcome back, ${escapeHtml(state.displayName.trim())}.` : "Your city, your kind of wonder.";
     const preview = saved.length
       ? `<div class="home-saved-preview">${saved.slice(0, 2).map(cardMarkup).join("")}</div>`
-      : emptyState("♡", "Your shortlist starts here", "Save a museum that catches your eye. Your Want to visit list will be waiting here.", "Explore museums", "discover");
+      : emptyState("♡", "Nothing saved yet", "Save places you want to visit.", "Browse museums", "discover");
 
     return `<section class="hero" aria-labelledby="home-title">
       <div class="hero-copy">
         <p class="eyebrow">Smithsonian museums · Washington, DC</p>
-        <h1 id="home-title">A city full of wonder.<br><em>A ranking that's yours.</em></h1>
-        <p>${greeting} Find a museum for the afternoon, keep a list for later, and build a personal ranking as you go.</p>
-        <div class="hero-actions"><button class="button" type="button" data-view="discover">Explore the museums <span class="icon" aria-hidden="true">→</span></button><button class="text-link" type="button" data-view="ranking">See how ranking works</button></div>
+        <h1 id="home-title">Plan a museum day.<br><em>Rank your favorites.</em></h1>
+        <p>${greeting} Find places to visit, save them for later, and rank the ones you love.</p>
+        <div class="hero-actions"><button class="button" type="button" data-view="discover">Explore museums <span class="icon" aria-hidden="true">→</span></button></div>
       </div>
       <div class="hero-art" aria-hidden="true"><span class="hero-sun"></span><span class="spark one">✦</span><span class="spark two">✧</span><span class="spark three">✦</span><div class="hero-building"><div class="building-roof"></div><div class="building-top"></div><div class="building-columns"><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="building-base"></div><div class="building-steps"></div></div></div>
     </section>
@@ -145,16 +144,12 @@
       <div class="stat-card"><span class="stat-icon" aria-hidden="true">✦</span><span><strong class="stat-value">${visited.length}</strong><span class="stat-label">museums visited</span></span></div>
       <div class="stat-card"><span class="stat-icon" aria-hidden="true">↕</span><span><strong class="stat-value">${ranked}</strong><span class="stat-label">in your ranking</span></span></div>
     </section>
-    <div class="home-grid">
-      <section class="home-panel"><div class="panel-title"><h2>Want to visit</h2><button class="text-link" type="button" data-view="wishlist">View your list →</button></div>${preview}</section>
-      <aside class="quick-start"><p class="eyebrow">A good place to start</p><h3>Make your next museum day yours.</h3><p>Save a few places first. After your visits, compare museums to find the order that feels right to you.</p><ol class="quick-start-list"><li><span class="step-number">1</span>Find a museum that sounds good</li><li><span class="step-number">2</span>Save it or log a visit</li><li><span class="step-number">3</span>Compare favorites and shape your ranking</li></ol><button class="button secondary" type="button" data-view="visits">Log a visit <span class="icon" aria-hidden="true">＋</span></button></aside>
-    </div>`;
+    <section class="home-panel"><div class="panel-title"><h2>Want to visit</h2><button class="text-link" type="button" data-view="wishlist">View list →</button></div>${preview}</section>`;
   }
 
   function filteredMuseums(view) {
     let list = museums;
     if (view === "wishlist") list = list.filter((museum) => state.wishlist.includes(museum.id));
-    if (view === "visits") list = list.filter((museum) => visitCountFor(museum.id) > 0);
     if (activeCategory !== "All museums") list = list.filter((museum) => museum.category === activeCategory);
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
@@ -165,22 +160,16 @@
 
   function renderDirectory(view) {
     const isWish = view === "wishlist";
-    const title = isWish ? "Want to visit" : view === "visits" ? "Your museum visits" : "Discover museums";
+    const title = isWish ? "Want to visit" : "Discover museums";
     const desc = isWish
-      ? "A personal shortlist for the next free afternoon, weekend, or trip across town."
-      : view === "visits"
-        ? "Keep a simple record of where you've been and what you'd like to remember."
-        : "Twelve Smithsonian museum institutions across Washington, DC. Find the one that fits today.";
+      ? "Museums you have saved for later."
+      : "Explore Smithsonian museums across Washington, DC.";
     const list = filteredMuseums(view);
-    const headingButton = view === "visits" ? `<button class="button small" type="button" data-action="open-visit"><span class="icon" aria-hidden="true">＋</span> Log a visit</button>` : "";
     if (isWish && state.wishlist.length === 0) {
       return `${heading("Your shortlist", title, desc)}${emptyState("♡", "Nothing saved yet", "Browse the Smithsonian pilot directory and save a museum you would like to visit.", "Discover museums", "discover")}`;
     }
-    if (view === "visits" && state.visits.length === 0) {
-      return `${heading("A little memory keeper", title, desc, headingButton)}${emptyState("✦", "Your first visit goes here", "When you have been to a museum, log the date and add a note for your future self.", "Find a museum", "discover")}`;
-    }
     const filters = ["All museums", "Art & design", "Art & history", "History & culture", "Science & nature", "Science & technology"];
-    return `${heading(isWish ? "Saved for later" : view === "visits" ? "Your history" : "The DC pilot", title, desc, headingButton)}
+    return `${heading(isWish ? "Saved for later" : "The DC pilot", title, desc)}
       <div class="toolbar"><label class="search-box"><input class="search-input" id="museum-search" type="search" placeholder="Search by museum, topic, or neighborhood" value="${escapeHtml(searchTerm)}" aria-label="Search museums"></label>
         <div class="filter-row" role="group" aria-label="Filter museums by topic">${filters.map((filter) => `<button class="filter-chip ${activeCategory === filter ? "is-active" : ""}" type="button" data-action="category" data-category="${escapeHtml(filter)}" aria-pressed="${activeCategory === filter}">${escapeHtml(filter)}</button>`).join("")}</div>
       </div>
@@ -193,10 +182,13 @@
     const rows = sorted.map((visit) => {
       const museum = byId.get(visit.museumId);
       if (!museum) return "";
-      return `<article class="visit-row"><span class="mini-art accent-${museum.accent}" aria-hidden="true">${escapeHtml(museum.monogram)}</span><div><h3>${escapeHtml(museum.shortName)}</h3><p>${dateLabel(visit.visitedOn)}${visit.note ? ` · ${escapeHtml(visit.note)}` : ""}</p></div><div class="visit-row-actions"><button class="button ghost small" type="button" data-action="open-museum" data-id="${museum.id}">Details</button><button class="button ghost small" type="button" data-action="delete-visit" data-id="${visit.id}" data-museum-id="${museum.id}" aria-label="Delete visit to ${escapeHtml(museum.shortName)}">Remove</button></div></article>`;
+      const visitPhoto = museum.photo
+        ? `<a class="mini-art has-photo" href="${escapeHtml(museum.photoSource)}" target="_blank" rel="noopener noreferrer" aria-label="Photo by ${escapeHtml(museum.photoCredit)}, ${escapeHtml(museum.photoLicenseLabel)}. View source and usage terms."><img src="${escapeHtml(museum.photo)}" alt="" loading="lazy" decoding="async"><span aria-hidden="true">↗</span></a>`
+        : `<span class="mini-art accent-${museum.accent}" aria-hidden="true">${escapeHtml(museum.monogram)}</span>`;
+      return `<article class="visit-row">${visitPhoto}<div><h3>${escapeHtml(museum.shortName)}</h3><p>${dateLabel(visit.visitedOn)}${visit.note ? ` · ${escapeHtml(visit.note)}` : ""}</p></div><div class="visit-row-actions"><button class="button ghost small" type="button" data-action="open-museum" data-id="${museum.id}">Details</button><button class="button ghost small" type="button" data-action="delete-visit" data-id="${visit.id}" data-museum-id="${museum.id}" aria-label="Delete visit to ${escapeHtml(museum.shortName)}">Remove</button></div></article>`;
     }).join("");
-    return `${heading("Your history", "Your museum visits", "A private record of the museums you've explored. Add a date and a note, then compare your experiences.", `<button class="button small" type="button" data-action="open-visit"><span class="icon" aria-hidden="true">＋</span> Log a visit</button>`)}
-      ${sorted.length ? `<div class="list-layout"><div class="visit-list">${rows}</div><aside class="list-note"><p class="eyebrow">Keep the memory</p><h3>What stayed with you?</h3><p>A short note can make it easier to compare the feeling of one visit with another. Your notes are saved only in this browser.</p></aside></div>` : emptyState("✦", "Your first visit goes here", "When you have been to a museum, log the date and add a note for your future self.", "Find a museum", "discover")}`;
+    return `${heading("", "My visits", "", `<button class="button small" type="button" data-action="open-visit"><span class="icon" aria-hidden="true">＋</span> Log a visit</button>`)}
+      ${sorted.length ? `<div class="visit-list">${rows}</div>` : emptyState("✦", "No visits yet", "Log a museum visit to see it here.", "Browse museums", "discover")}`;
   }
 
   function renderRanking() {
@@ -206,7 +198,7 @@
     const rows = ranked.map((museum, index) => `<li class="rank-item"><span class="rank-number">${index + 1}</span><div class="rank-copy"><h3>${escapeHtml(museum.shortName)}</h3><p>${visitCountFor(museum.id)} visit${visitCountFor(museum.id) === 1 ? "" : "s"} · ${escapeHtml(museum.category)}</p></div><div class="rank-controls"><button type="button" data-action="move-rank" data-id="${museum.id}" data-direction="up" aria-label="Move ${escapeHtml(museum.shortName)} up" ${index === 0 ? "disabled" : ""}>↑</button><button type="button" data-action="move-rank" data-id="${museum.id}" data-direction="down" aria-label="Move ${escapeHtml(museum.shortName)} down" ${index === ranked.length - 1 ? "disabled" : ""}>↓</button></div></li>`).join("");
     const action = pending.length ? `<button class="button small" type="button" data-action="start-ranking">Compare museums <span class="icon" aria-hidden="true">↗</span></button>` : "";
     const body = ranked.length
-      ? `<div class="list-layout"><div><ol class="rank-list">${rows}</ol>${pending.length ? `<div class="rank-pending"><strong>${pending.length} visited museum${pending.length === 1 ? "" : "s"} ${pending.length === 1 ? "is" : "are"} still to place.</strong><br>Compare a new visit with a museum already on your list to find its spot.${action}</div>` : ""}</div><aside class="list-note"><p class="eyebrow">Your order, your call</p><h3>Rankings are personal.</h3><p>Choose which museum you enjoyed more in a head-to-head comparison. You can always adjust the order yourself with the arrows.</p>${ranked.length > 1 ? `<p style="margin-top:12px"><button class="button secondary small" type="button" data-action="start-ranking">Compare again</button></p>` : ""}</aside></div>`
+      ? `<div class="ranking-main"><ol class="rank-list">${rows}</ol>${pending.length ? `<div class="rank-pending"><strong>${pending.length} visited museum${pending.length === 1 ? "" : "s"} ${pending.length === 1 ? "is" : "are"} still to place.</strong><br>Compare a new visit with a museum already on your list to find its spot.${action}</div>` : ranked.length > 1 ? `<div class="ranking-actions"><button class="button secondary small" type="button" data-action="start-ranking">Compare again</button></div>` : ""}</div>`
       : visitedIds.length >= 2
         ? `<div class="rank-pending"><strong>You have museums to compare.</strong><br>Choose which you enjoyed more, one pair at a time, and the list will find its order.<br><button class="button small" type="button" data-action="start-ranking">Build my ranking <span class="icon" aria-hidden="true">↗</span></button></div>`
         : emptyState("↕", "Your ranking takes shape as you go", "Log visits to at least two different museums. Then compare them to start your personal ranking.", "Log a visit", "visits");
@@ -224,10 +216,10 @@
   function renderView() {
     updateHeader();
     if (currentView === "home") content.innerHTML = renderHome();
-    else if (currentView === "discover" || currentView === "wishlist" || currentView === "visits") content.innerHTML = renderDirectory(currentView);
+    else if (currentView === "discover" || currentView === "wishlist") content.innerHTML = renderDirectory(currentView);
     else if (currentView === "ranking") content.innerHTML = renderRanking();
     else if (currentView === "profile") content.innerHTML = renderProfile();
-    if (currentView === "visits") content.innerHTML = renderVisits();
+    else if (currentView === "visits") content.innerHTML = renderVisits();
   }
 
   function toggleSave(id) {
