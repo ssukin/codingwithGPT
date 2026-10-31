@@ -214,10 +214,6 @@
       <div id="friends-results">${renderFriendResults()}</div>`;
   }
 
-  function rankHue(index, count) {
-    return count <= 1 ? 135 : Math.round(135 * (1 - index / (count - 1)));
-  }
-
   function renderFriendCard(friend) {
     return `<article class="friend-card is-suggested"><div class="friend-heading"><h3>${escapeHtml(friend.name)}</h3><span class="friend-visit-count">${friend.submittedVisits} visits</span></div><button class="button secondary small" type="button" data-action="add-friend" data-friend-id="${friend.id}">Add friend</button></article>`;
   }
@@ -236,7 +232,7 @@
         .filter((item) => !query || `${item.museum.name} ${item.museum.shortName} ${item.museum.category}`.toLowerCase().includes(query))
         .sort((a, b) => a.average - b.average);
       return averages.length
-        ? `<ol class="friends-average-list">${averages.map((item, index) => `<li><span class="average-rank" style="--rank-hue:${rankHue(index, averages.length)}">${index + 1}</span><span class="average-museum">${escapeHtml(item.museum.shortName)}</span><span class="average-value">${item.average.toFixed(1)} avg</span></li>`).join("")}</ol>`
+        ? `<ol class="friends-average-list">${averages.map((item, index) => `<li><span class="average-rank">${index + 1}</span><span class="average-museum">${escapeHtml(item.museum.shortName)}</span><span class="average-value">${item.average.toFixed(1)} avg</span></li>`).join("")}</ol>`
         : `<p class="friend-empty">No museums found.</p>`;
     }
     const friends = demoFriends.filter((friend) => !query || friend.name.toLowerCase().includes(query));
@@ -304,7 +300,7 @@
     const rows = ranked.map((museum, index) => {
       const visits = state.visits.filter((visit) => visit.museumId === museum.id).sort((a, b) => b.visitedOn.localeCompare(a.visitedOn));
       const visitHistory = visits.length ? `<details class="rank-visits"><summary>${visits.length} visit${visits.length === 1 ? "" : "s"}</summary><ul>${visits.map((visit) => `<li><span>${dateLabel(visit.visitedOn)}${visit.note ? ` · ${escapeHtml(visit.note)}` : ""}</span><button class="text-link" type="button" data-action="delete-visit" data-id="${visit.id}" data-museum-id="${museum.id}">Remove</button></li>`).join("")}</ul></details>` : "";
-      return `<li class="rank-item"><span class="rank-number" style="--rank-hue:${rankHue(index, ranked.length)}">${index + 1}</span><div class="rank-copy"><h3>${escapeHtml(museum.shortName)}</h3><p>${visits.length} visit${visits.length === 1 ? "" : "s"} · ${escapeHtml(museum.category)}</p>${visitHistory}</div><div class="rank-controls"><button type="button" data-action="move-rank" data-id="${museum.id}" data-direction="up" aria-label="Move ${escapeHtml(museum.shortName)} up" ${index === 0 ? "disabled" : ""}>↑</button><button type="button" data-action="move-rank" data-id="${museum.id}" data-direction="down" aria-label="Move ${escapeHtml(museum.shortName)} down" ${index === ranked.length - 1 ? "disabled" : ""}>↓</button></div></li>`;
+      return `<li class="rank-item"><span class="rank-number">${index + 1}</span><div class="rank-copy"><h3>${escapeHtml(museum.shortName)}</h3><p>${visits.length} visit${visits.length === 1 ? "" : "s"} · ${escapeHtml(museum.category)}</p>${visitHistory}</div><div class="rank-controls"><button type="button" data-action="move-rank" data-id="${museum.id}" data-direction="up" aria-label="Move ${escapeHtml(museum.shortName)} up" ${index === 0 ? "disabled" : ""}>↑</button><button type="button" data-action="move-rank" data-id="${museum.id}" data-direction="down" aria-label="Move ${escapeHtml(museum.shortName)} down" ${index === ranked.length - 1 ? "disabled" : ""}>↓</button></div></li>`;
     }).join("");
     const actions = `<div class="ranking-header-actions"><button class="button secondary small" type="button" data-action="open-visit"><span aria-hidden="true">＋</span> Log a visit</button>${ranked.length > 1 ? `<button class="button small" type="button" data-action="start-ranking">Compare again</button>` : ""}</div>`;
     const body = ranked.length
