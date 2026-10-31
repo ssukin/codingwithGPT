@@ -210,7 +210,7 @@
     const searchPlaceholder = friendsMode === "museums" ? "Search museums" : "Search or add friends";
     const searchLabel = friendsMode === "museums" ? "Search museums" : "Search friends or find people to add";
     return `${heading("", "Friends", "")}${modeToggle}
-      <label class="friend-search"><span class="visually-hidden">${searchLabel}</span><input class="search-input" id="friends-search" type="search" placeholder="${searchPlaceholder}" value="${escapeHtml(friendSearchTerm)}"></label>
+      <label class="search-box friend-search"><span class="visually-hidden">${searchLabel}</span><input class="search-input" id="friends-search" type="search" placeholder="${searchPlaceholder}" value="${escapeHtml(friendSearchTerm)}"></label>
       <div id="friends-results">${renderFriendResults()}</div>`;
   }
 
@@ -244,7 +244,7 @@
     const suggestions = query ? suggestedFriends.filter((friend) => friend.name.toLowerCase().includes(query) && !friendIds.has(friend.id)) : [];
     const orderedFriends = [...friends].sort((a, b) => b.submittedVisits - a.submittedVisits);
     let contentMarkup = orderedFriends.length
-      ? `<ol class="friends-average-list">${orderedFriends.map((friend, index) => `<li><span class="average-rank" style="--rank-hue:${rankHue(index, orderedFriends.length)}">${index + 1}</span><span class="average-museum">${escapeHtml(friend.name)}</span><span class="average-value">${friend.submittedVisits} visits</span></li>`).join("")}</ol>`
+      ? `<ol class="friends-average-list friends-visits-list">${orderedFriends.map((friend) => `<li><span class="average-museum">${escapeHtml(friend.name)}</span><span class="visit-total"><strong>${friend.submittedVisits}</strong><span>visits</span></span></li>`).join("")}</ol>`
       : `<p class="friend-empty">Add friends to see who has submitted the most visits.</p>`;
     if (suggestions.length) contentMarkup += `<div class="friend-suggestions">${suggestions.map(renderFriendCard).join("")}</div>`;
     return contentMarkup;
@@ -304,7 +304,7 @@
     const rows = ranked.map((museum, index) => {
       const visits = state.visits.filter((visit) => visit.museumId === museum.id).sort((a, b) => b.visitedOn.localeCompare(a.visitedOn));
       const visitHistory = visits.length ? `<details class="rank-visits"><summary>${visits.length} visit${visits.length === 1 ? "" : "s"}</summary><ul>${visits.map((visit) => `<li><span>${dateLabel(visit.visitedOn)}${visit.note ? ` · ${escapeHtml(visit.note)}` : ""}</span><button class="text-link" type="button" data-action="delete-visit" data-id="${visit.id}" data-museum-id="${museum.id}">Remove</button></li>`).join("")}</ul></details>` : "";
-      return `<li class="rank-item"><span class="rank-number">${index + 1}</span><div class="rank-copy"><h3>${escapeHtml(museum.shortName)}</h3><p>${visits.length} visit${visits.length === 1 ? "" : "s"} · ${escapeHtml(museum.category)}</p>${visitHistory}</div><div class="rank-controls"><button type="button" data-action="move-rank" data-id="${museum.id}" data-direction="up" aria-label="Move ${escapeHtml(museum.shortName)} up" ${index === 0 ? "disabled" : ""}>↑</button><button type="button" data-action="move-rank" data-id="${museum.id}" data-direction="down" aria-label="Move ${escapeHtml(museum.shortName)} down" ${index === ranked.length - 1 ? "disabled" : ""}>↓</button></div></li>`;
+      return `<li class="rank-item"><span class="rank-number" style="--rank-hue:${rankHue(index, ranked.length)}">${index + 1}</span><div class="rank-copy"><h3>${escapeHtml(museum.shortName)}</h3><p>${visits.length} visit${visits.length === 1 ? "" : "s"} · ${escapeHtml(museum.category)}</p>${visitHistory}</div><div class="rank-controls"><button type="button" data-action="move-rank" data-id="${museum.id}" data-direction="up" aria-label="Move ${escapeHtml(museum.shortName)} up" ${index === 0 ? "disabled" : ""}>↑</button><button type="button" data-action="move-rank" data-id="${museum.id}" data-direction="down" aria-label="Move ${escapeHtml(museum.shortName)} down" ${index === ranked.length - 1 ? "disabled" : ""}>↓</button></div></li>`;
     }).join("");
     const actions = `<div class="ranking-header-actions"><button class="button secondary small" type="button" data-action="open-visit"><span aria-hidden="true">＋</span> Log a visit</button>${ranked.length > 1 ? `<button class="button small" type="button" data-action="start-ranking">Compare again</button>` : ""}</div>`;
     const body = ranked.length
