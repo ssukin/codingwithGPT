@@ -12,9 +12,10 @@
   const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 
   let state = loadState();
-  let currentView = "home";
-  let activeCategory = "All museums";
+  let currentView = "discover";
+  let activeCategory = "All categories";
   let searchTerm = "";
+  let discoverScope = "all";
   let comparisonSession = null;
   let discoverDisplay = "list";
   let mapInstance = null;
@@ -39,7 +40,8 @@
       if (friend && !demoFriends.some((existing) => existing.id === friend.id)) demoFriends.push(friend);
     });
   } catch {}
-  let friendsMode = "museums";
+  let rankingMode = "mine";
+  let rankingSearchTerm = "";
   let friendSearchTerm = "";
 
   function loadState() {
@@ -136,7 +138,7 @@
       <span class="empty-symbol" aria-hidden="true">${symbol}</span>
       <h3>${escapeHtml(title)}</h3>
       <p>${escapeHtml(copy)}</p>
-      ${actionLabel ? (actionView === "clear-filters" ? `<button class="button" type="button" data-action="clear-filters">${escapeHtml(actionLabel)}</button>` : `<button class="button" type="button" data-view="${actionView}">${escapeHtml(actionLabel)}</button>`) : ""}
+      ${actionLabel ? (actionView === "clear-filters" || actionView === "all-museums" ? `<button class="button" type="button" data-action="${actionView === "clear-filters" ? "clear-filters" : "show-all-museums"}">${escapeHtml(actionLabel)}</button>` : `<button class="button" type="button" data-view="${actionView}">${escapeHtml(actionLabel)}</button>`) : ""}
     </div>`;
   }
 
@@ -144,35 +146,10 @@
     return `<div class="section-heading"><div>${eyebrow ? `<p class="eyebrow">${escapeHtml(eyebrow)}</p>` : ""}<h2>${escapeHtml(title)}</h2>${description ? `<p>${escapeHtml(description)}</p>` : ""}</div>${buttonMarkup}</div>`;
   }
 
-  function renderHome() {
-    const saved = state.wishlist.map((id) => byId.get(id)).filter(Boolean);
-    const visited = uniqueVisitedIds();
-    const ranked = state.ranking.length;
-    const greeting = "Find Smithsonian museums and rank the ones you love.";
-    const preview = saved.length
-      ? `<div class="home-saved-preview">${saved.slice(0, 2).map(cardMarkup).join("")}</div>`
-      : emptyState("♡", "Nothing saved yet", "Save places you want to visit.", "Browse museums", "discover");
-
-    return `<section class="hero" aria-labelledby="home-title">
-      <div class="hero-copy">
-        <h1 id="home-title">Plan a museum day.<br><em>Rank your favorites.</em></h1>
-        <p>${greeting}</p>
-        <div class="hero-actions"><button class="button" type="button" data-view="discover">Explore museums <span class="icon" aria-hidden="true">→</span></button></div>
-      </div>
-      <div class="hero-art" aria-hidden="true"><span class="hero-sun"></span><span class="spark one">✦</span><span class="spark two">✧</span><span class="spark three">✦</span><div class="hero-building"><div class="building-roof"></div><div class="building-top"></div><div class="building-columns"><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="building-base"></div><div class="building-steps"></div></div></div>
-    </section>
-    <section class="stats-row" aria-label="Your museum activity">
-      <div class="stat-card"><span class="stat-icon" aria-hidden="true">♡</span><span><strong class="stat-value">${state.wishlist.length}</strong><span class="stat-label">on your list</span></span></div>
-      <div class="stat-card"><span class="stat-icon" aria-hidden="true">✦</span><span><strong class="stat-value">${visited.length}</strong><span class="stat-label">museums visited</span></span></div>
-      <div class="stat-card"><span class="stat-icon" aria-hidden="true">↕</span><span><strong class="stat-value">${ranked}</strong><span class="stat-label">in your ranking</span></span></div>
-    </section>
-    <section class="home-panel"><div class="panel-title"><h2>Want to visit</h2><button class="text-link" type="button" data-view="wishlist">View list →</button></div>${preview}</section>`;
-  }
-
   function filteredMuseums(view) {
     let list = museums;
-    if (view === "wishlist") list = list.filter((museum) => state.wishlist.includes(museum.id));
-    if (activeCategory !== "All museums") {
+    if (view === "wishlist" || (view === "discover" && discoverScope === "wishlist")) list = list.filter((museum) => state.wishlist.includes(museum.id));
+    if (activeCategory !== "All categories") {
       const categoryMatch = activeCategory === "Art"
         ? (museum) => museum.category.startsWith("Art")
         : activeCategory === "History"
@@ -188,53 +165,39 @@
   }
 
   function renderDirectory(view) {
-    const isWish = view === "wishlist";
-    const title = isWish ? "Want to visit" : "Discover museums";
+    const isWish = view === "wishlist" || discoverScope === "wishlist";
+    const title = "Discover museums";
     const list = filteredMuseums(view);
-    if (isWish && state.wishlist.length === 0) {
-      return `${heading("", title, "")}${emptyState("♡", "Nothing saved yet", "Browse museums and save one for later.", "Discover museums", "discover")}`;
-    }
-    const filters = ["All museums", "Art", "History", "Science"];
-    const viewToggle = !isWish ? `<div class="directory-actions"><div class="view-toggle" role="group" aria-label="Discover display"><button class="${discoverDisplay === "list" ? "is-active" : ""}" type="button" data-action="discover-display" data-display="list" aria-pressed="${discoverDisplay === "list"}">List</button><button class="${discoverDisplay === "map" ? "is-active" : ""}" type="button" data-action="discover-display" data-display="map" aria-pressed="${discoverDisplay === "map"}">Map</button></div></div>` : "";
-    const results = list.length ? list.map(cardMarkup).join("") : emptyState("⌕", "No matches yet", "Try a different search or clear the topic filter.", "Clear filters", "clear-filters");
+    const filters = ["All categories", "Art", "History", "Science"];
+    const scopeToggle = `<div class="collection-toggle view-toggle" role="group" aria-label="Museum list"><button class="${discoverScope === "all" ? "is-active" : ""}" type="button" data-action="museum-scope" data-scope="all" aria-pressed="${discoverScope === "all"}">All museums</button><button class="${discoverScope === "wishlist" ? "is-active" : ""}" type="button" data-action="museum-scope" data-scope="wishlist" aria-pressed="${discoverScope === "wishlist"}">Want to visit</button></div>`;
+    const viewToggle = "";
+    /* Temporarily hidden; restore when the map view is ready to return.
+    const viewToggle = `<div class="directory-actions"><div class="view-toggle" role="group" aria-label="Discover display"><button class="${discoverDisplay === "list" ? "is-active" : ""}" type="button" data-action="discover-display" data-display="list" aria-pressed="${discoverDisplay === "list"}">List</button><button class="${discoverDisplay === "map" ? "is-active" : ""}" type="button" data-action="discover-display" data-display="map" aria-pressed="${discoverDisplay === "map"}">Map</button></div></div>`;
+    */
+    const results = list.length ? list.map(cardMarkup).join("") : isWish && state.wishlist.length === 0
+      ? emptyState("♡", "Nothing saved yet", "Use the heart on a museum to add it here.", "Browse all museums", "all-museums")
+      : emptyState("⌕", "No matches yet", "Try a different search or clear the topic filter.", "Clear filters", "clear-filters");
     return `${heading("", title, "")}
-      <div class="toolbar"><label class="search-box"><input class="search-input" id="museum-search" type="search" placeholder="Search by museum, topic, or neighborhood" value="${escapeHtml(searchTerm)}" aria-label="Search museums"></label>
-        <div class="filter-row" role="group" aria-label="Filter museums by topic">${filters.map((filter) => `<button class="filter-chip ${activeCategory === filter ? "is-active" : ""}" type="button" data-action="category" data-category="${escapeHtml(filter)}" aria-pressed="${activeCategory === filter}">${escapeHtml(filter)}</button>`).join("")}</div>${viewToggle}
+      <div class="collection-toolbar">${scopeToggle}</div>
+      <div class="toolbar"><label class="search-box"><input class="search-input" id="museum-search" type="search" placeholder="${isWish ? "Search your saved museums" : "Search by museum, topic, or neighborhood"}" value="${escapeHtml(searchTerm)}" aria-label="${isWish ? "Search saved museums" : "Search museums"}"></label>
+        <div class="filter-row" role="group" aria-label="Filter museums by category">${filters.map((filter) => `<button class="filter-chip ${activeCategory === filter ? "is-active" : ""}" type="button" data-action="category" data-category="${escapeHtml(filter)}" aria-pressed="${activeCategory === filter}">${escapeHtml(filter)}</button>`).join("")}</div>${viewToggle}
       </div>
       <p class="result-count" id="result-count">${list.length} museum${list.length === 1 ? "" : "s"}</p>
-      ${discoverDisplay === "map" && !isWish ? `${list.length ? `<div class="map-frame"><div id="museum-map" class="museum-map" aria-label="Map of Smithsonian museums"></div><div class="map-legend"><span class="legend-ranked">1</span> Your rank <span class="legend-unranked">•</span> Unranked</div></div>` : results}` : `<div class="museum-grid" id="museum-grid">${results}</div>`}`;
+      ${discoverDisplay === "map" ? `${list.length ? `<div class="map-frame"><div id="museum-map" class="museum-map" aria-label="Map of Smithsonian museums"></div><div class="map-legend"><span class="legend-ranked">1</span> Your rank <span class="legend-unranked">•</span> Unranked</div></div>` : `<div class="museum-grid" id="museum-grid">${results}</div>`}` : `<div class="museum-grid" id="museum-grid">${results}</div>`}`;
   }
 
   function renderFriends() {
-    const modeToggle = `<div class="friends-mode-toggle view-toggle" role="group" aria-label="Friends views"><button class="${friendsMode === "museums" ? "is-active" : ""}" type="button" data-action="friends-mode" data-mode="museums" aria-pressed="${friendsMode === "museums"}">Friend Rankings</button><button class="${friendsMode === "visits" ? "is-active" : ""}" type="button" data-action="friends-mode" data-mode="visits" aria-pressed="${friendsMode === "visits"}">Most Visits</button></div>`;
-    const searchPlaceholder = friendsMode === "museums" ? "Search museums" : "Search or add friends";
-    const searchLabel = friendsMode === "museums" ? "Search museums" : "Search friends or find people to add";
-    return `${heading("", "Friends", "")}${modeToggle}
-      <label class="search-box friend-search"><span class="visually-hidden">${searchLabel}</span><input class="search-input" id="friends-search" type="search" placeholder="${searchPlaceholder}" value="${escapeHtml(friendSearchTerm)}"></label>
-      <div id="friends-results">${renderFriendResults()}</div>`;
+    return `${heading("", "Leaderboard", "")}
+      <label class="search-box friend-search"><span class="visually-hidden">Search friends or find people to add</span><input class="search-input" id="friends-search" type="search" placeholder="Search or add friends" value="${escapeHtml(friendSearchTerm)}"></label>
+      <div id="friends-results">${renderLeaderboardResults()}</div>`;
   }
 
   function renderFriendCard(friend) {
     return `<article class="friend-card is-suggested"><div class="friend-heading"><h3>${escapeHtml(friend.name)}</h3><span class="friend-visit-count">${friend.submittedVisits} visits</span></div><button class="button secondary small" type="button" data-action="add-friend" data-friend-id="${friend.id}">Add friend</button></article>`;
   }
 
-  function renderFriendResults() {
+  function renderLeaderboardResults() {
     const query = friendSearchTerm.trim().toLowerCase();
-    if (friendsMode === "museums") {
-      const averageRanks = new Map();
-      demoFriends.forEach((friend) => friend.ranking.forEach((id, index) => {
-        const positions = averageRanks.get(id) || [];
-        positions.push(index + 1);
-        averageRanks.set(id, positions);
-      }));
-      const averages = [...averageRanks.entries()].map(([id, positions]) => ({ museum: byId.get(id), average: positions.reduce((sum, position) => sum + position, 0) / positions.length }))
-        .filter((item) => item.museum)
-        .filter((item) => !query || `${item.museum.name} ${item.museum.shortName} ${item.museum.category}`.toLowerCase().includes(query))
-        .sort((a, b) => a.average - b.average);
-      return averages.length
-        ? `<ol class="friends-average-list">${averages.map((item, index) => `<li><span class="average-rank">${index + 1}</span><span class="average-museum">${escapeHtml(item.museum.shortName)}</span><span class="average-value">${item.average.toFixed(1)} avg</span></li>`).join("")}</ol>`
-        : `<p class="friend-empty">No museums found.</p>`;
-    }
     const friends = demoFriends.filter((friend) => !query || friend.name.toLowerCase().includes(query));
     const friendIds = new Set(demoFriends.map((friend) => friend.id));
     const suggestions = query ? suggestedFriends.filter((friend) => friend.name.toLowerCase().includes(query) && !friendIds.has(friend.id)) : [];
@@ -244,6 +207,23 @@
       : `<p class="friend-empty">Add friends to see who has submitted the most visits.</p>`;
     if (suggestions.length) contentMarkup += `<div class="friend-suggestions">${suggestions.map(renderFriendCard).join("")}</div>`;
     return contentMarkup;
+  }
+
+  function renderFriendRankingResults() {
+    const query = rankingSearchTerm.trim().toLowerCase();
+    const averageRanks = new Map();
+    demoFriends.forEach((friend) => friend.ranking.forEach((id, index) => {
+      const positions = averageRanks.get(id) || [];
+      positions.push(index + 1);
+      averageRanks.set(id, positions);
+    }));
+    const averages = [...averageRanks.entries()].map(([id, positions]) => ({ museum: byId.get(id), average: positions.reduce((sum, position) => sum + position, 0) / positions.length }))
+      .filter((item) => item.museum)
+      .filter((item) => !query || `${item.museum.name} ${item.museum.shortName} ${item.museum.category}`.toLowerCase().includes(query))
+      .sort((a, b) => a.average - b.average);
+    return averages.length
+      ? `<ol class="friends-average-list">${averages.map((item, index) => `<li><span class="average-rank">${index + 1}</span><span class="average-museum">${escapeHtml(item.museum.shortName)}</span><span class="average-value">${item.average.toFixed(1)} avg</span></li>`).join("")}</ol>`
+      : `<p class="friend-empty">No museums found.</p>`;
   }
 
   function renderMap() {
@@ -294,6 +274,13 @@
   }
 
   function renderRanking() {
+    const modeToggle = `<div class="ranking-mode-toggle view-toggle" role="group" aria-label="Ranking views"><button class="${rankingMode === "mine" ? "is-active" : ""}" type="button" data-action="ranking-mode" data-mode="mine" aria-pressed="${rankingMode === "mine"}">My ranking</button><button class="${rankingMode === "friends" ? "is-active" : ""}" type="button" data-action="ranking-mode" data-mode="friends" aria-pressed="${rankingMode === "friends"}">Friends’ average</button></div>`;
+    if (rankingMode === "friends") {
+      return `${heading("", "Ranking", "")}${modeToggle}
+        <label class="search-box ranking-search"><span class="visually-hidden">Search museums</span><input class="search-input" id="ranking-friends-search" type="search" placeholder="Search museums" value="${escapeHtml(rankingSearchTerm)}"></label>
+        <div id="friend-ranking-results">${renderFriendRankingResults()}</div>`;
+    }
+
     const ranked = state.ranking.map((id) => byId.get(id)).filter(Boolean);
     const visitedIds = uniqueVisitedIds();
     const pending = visitedIds.filter((id) => !state.ranking.includes(id));
@@ -306,7 +293,7 @@
     const body = ranked.length
       ? `<div class="ranking-main"><ol class="rank-list">${rows}</ol>${pending.length ? `<div class="rank-pending"><strong>${pending.length} museum${pending.length === 1 ? "" : "s"} to place.</strong><br>Finish comparing your recent visits to update the ranking.<br><button class="button small" type="button" data-action="start-ranking">Continue ranking</button></div>` : ""}</div>`
       : `<div class="empty-state"><span class="empty-symbol" aria-hidden="true">↕</span><h3>Your ranking starts with a visit</h3><p>Log a visit to add your first museum.</p><button class="button" type="button" data-action="open-visit">Log a visit</button></div>`;
-    return `${heading("", "My ranking", "", actions)}${body}`;
+    return `${heading("", "Ranking", "", actions)}${modeToggle}${body}`;
   }
 
   function renderProfile() {
@@ -322,8 +309,7 @@
     mapInstance = null;
     mapMarkers = null;
     updateHeader();
-    if (currentView === "home") content.innerHTML = renderHome();
-    else if (currentView === "discover" || currentView === "wishlist") content.innerHTML = renderDirectory(currentView);
+    if (currentView === "discover" || currentView === "wishlist") content.innerHTML = renderDirectory(currentView);
     else if (currentView === "ranking") content.innerHTML = renderRanking();
     else if (currentView === "friends") content.innerHTML = renderFriends();
     else if (currentView === "profile") content.innerHTML = renderProfile();
@@ -522,14 +508,21 @@
     } else if (action === "discover-display") {
       discoverDisplay = button.dataset.display;
       refreshDirectory();
-    } else if (action === "clear-filters") {
-      activeCategory = "All museums";
+    } else if (action === "museum-scope") {
+      discoverScope = button.dataset.scope;
+      refreshDirectory();
+    } else if (action === "show-all-museums") {
+      discoverScope = "all";
+      activeCategory = "All categories";
       searchTerm = "";
       refreshDirectory();
-    } else if (action === "friends-mode") {
-      friendsMode = button.dataset.mode;
-      friendSearchTerm = "";
-      content.innerHTML = renderFriends();
+    } else if (action === "clear-filters") {
+      activeCategory = "All categories";
+      searchTerm = "";
+      refreshDirectory();
+    } else if (action === "ranking-mode") {
+      rankingMode = button.dataset.mode;
+      content.innerHTML = renderRanking();
     } else if (action === "add-friend") {
       const friend = suggestedFriends.find((suggestion) => suggestion.id === button.dataset.friendId);
       if (friend && !demoFriends.some((existing) => existing.name.toLowerCase() === friend.name.toLowerCase())) {
@@ -544,8 +537,11 @@
     } else if (action === "clear-data") {
       if (window.confirm("Clear your saved list, visits, ranking, and profile from this browser? This cannot be undone.")) {
         state = { displayName: "", wishlist: [], visits: [], ranking: [] };
+        discoverScope = "all";
+        activeCategory = "All categories";
+        searchTerm = "";
         saveState();
-        setView("home");
+        setView("discover");
         showToast("Your browser data has been cleared.");
       }
     }
@@ -573,7 +569,11 @@
     } else if (event.target.id === "friends-search") {
       friendSearchTerm = event.target.value;
       const results = document.querySelector("#friends-results");
-      if (results) results.innerHTML = renderFriendResults();
+      if (results) results.innerHTML = renderLeaderboardResults();
+    } else if (event.target.id === "ranking-friends-search") {
+      rankingSearchTerm = event.target.value;
+      const results = document.querySelector("#friend-ranking-results");
+      if (results) results.innerHTML = renderFriendRankingResults();
     }
   });
 
