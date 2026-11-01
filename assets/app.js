@@ -9,6 +9,7 @@
   const museumDialog = document.querySelector("#museum-dialog");
   const visitDialog = document.querySelector("#visit-dialog");
   const compareDialog = document.querySelector("#compare-dialog");
+  const addFriendsDialog = document.querySelector("#add-friends-dialog");
   const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 
   let state = loadState();
@@ -42,7 +43,8 @@
   } catch {}
   let rankingMode = "mine";
   let rankingSearchTerm = "";
-  let friendSearchTerm = "";
+  let leaderboardSearchTerm = "";
+  let addFriendSearchTerm = "";
 
   function loadState() {
     try {
@@ -179,7 +181,7 @@
       : emptyState("⌕", "No matches yet", "Try a different search or clear the topic filter.", "Clear filters", "clear-filters");
     return `${heading("", title, "")}
       <div class="collection-toolbar">${scopeToggle}</div>
-      <div class="toolbar"><label class="search-box"><input class="search-input" id="museum-search" type="search" placeholder="${isWish ? "Search your saved museums" : "Search by museum, topic, or neighborhood"}" value="${escapeHtml(searchTerm)}" aria-label="${isWish ? "Search saved museums" : "Search museums"}"></label>
+      <div class="toolbar"><label class="search-box"><input class="search-input" id="museum-search" type="search" placeholder="Search museums" value="${escapeHtml(searchTerm)}" aria-label="Search museums"></label>
         <div class="filter-row" role="group" aria-label="Filter museums by category">${filters.map((filter) => `<button class="filter-chip ${activeCategory === filter ? "is-active" : ""}" type="button" data-action="category" data-category="${escapeHtml(filter)}" aria-pressed="${activeCategory === filter}">${escapeHtml(filter)}</button>`).join("")}</div>${viewToggle}
       </div>
       <p class="result-count" id="result-count">${list.length} museum${list.length === 1 ? "" : "s"}</p>
@@ -187,26 +189,41 @@
   }
 
   function renderFriends() {
-    return `${heading("", "Leaderboard", "")}
-      <label class="search-box friend-search"><span class="visually-hidden">Search friends or find people to add</span><input class="search-input" id="friends-search" type="search" placeholder="Search or add friends" value="${escapeHtml(friendSearchTerm)}"></label>
-      <div id="friends-results">${renderLeaderboardResults()}</div>`;
+    const addFriendsButton = `<button class="button small" type="button" data-action="open-add-friends">Add friends</button>`;
+    return `${heading("", "Leaderboard", "", addFriendsButton)}
+      <label class="search-box friend-search"><span class="visually-hidden">Search leaderboard friends</span><input class="search-input" id="leaderboard-search" type="search" placeholder="Search friends" value="${escapeHtml(leaderboardSearchTerm)}"></label>
+      <div id="leaderboard-results">${renderLeaderboardResults()}</div>`;
+  }
+
+  function renderAddFriendsDialog() {
+    addFriendsDialog.innerHTML = `<div class="dialog-inner"><button class="dialog-close" type="button" data-action="close-add-friends" aria-label="Close add friends">×</button><h2 class="dialog-heading" id="add-friends-title">Add friends</h2>
+      <label class="search-box friend-add-search"><span class="visually-hidden">Search people to add as friends</span><input class="search-input" id="add-friend-search" type="search" placeholder="Search people to add" value="${escapeHtml(addFriendSearchTerm)}"></label>
+      <div id="add-friend-results">${renderAddFriendResults()}</div></div>`;
+    addFriendsDialog.showModal();
+    document.querySelector("#add-friend-search")?.focus();
   }
 
   function renderFriendCard(friend) {
-    return `<article class="friend-card is-suggested"><div class="friend-heading"><h3>${escapeHtml(friend.name)}</h3><span class="friend-visit-count">${friend.submittedVisits} visits</span></div><button class="button secondary small" type="button" data-action="add-friend" data-friend-id="${friend.id}">Add friend</button></article>`;
+    return `<article class="friend-card is-suggested"><div class="friend-heading"><h3>${escapeHtml(friend.name)}</h3><span class="friend-visit-count">${friend.submittedVisits} visits</span></div><button class="button small" type="button" data-action="add-friend" data-friend-id="${friend.id}">Add friend</button></article>`;
   }
 
   function renderLeaderboardResults() {
-    const query = friendSearchTerm.trim().toLowerCase();
+    const query = leaderboardSearchTerm.trim().toLowerCase();
     const friends = demoFriends.filter((friend) => !query || friend.name.toLowerCase().includes(query));
-    const friendIds = new Set(demoFriends.map((friend) => friend.id));
-    const suggestions = query ? suggestedFriends.filter((friend) => friend.name.toLowerCase().includes(query) && !friendIds.has(friend.id)) : [];
     const orderedFriends = [...friends].sort((a, b) => b.submittedVisits - a.submittedVisits);
-    let contentMarkup = orderedFriends.length
+    return orderedFriends.length
       ? `<ol class="friends-average-list friends-visits-list">${orderedFriends.map((friend) => `<li><span class="average-museum">${escapeHtml(friend.name)}</span><span class="visit-total"><strong>${friend.submittedVisits}</strong><span>visits</span></span></li>`).join("")}</ol>`
-      : `<p class="friend-empty">Add friends to see who has submitted the most visits.</p>`;
-    if (suggestions.length) contentMarkup += `<div class="friend-suggestions">${suggestions.map(renderFriendCard).join("")}</div>`;
-    return contentMarkup;
+      : `<p class="friend-empty">No friends found.</p>`;
+  }
+
+  function renderAddFriendResults() {
+    const query = addFriendSearchTerm.trim().toLowerCase();
+    if (!query) return "";
+    const friendIds = new Set(demoFriends.map((friend) => friend.id).filter(Boolean));
+    const suggestions = suggestedFriends.filter((friend) => friend.name.toLowerCase().includes(query) && !friendIds.has(friend.id));
+    return suggestions.length
+      ? `<div class="friend-suggestions">${suggestions.map(renderFriendCard).join("")}</div>`
+      : `<p class="friend-empty">No people to add found.</p>`;
   }
 
   function renderFriendRankingResults() {
@@ -523,6 +540,11 @@
     } else if (action === "ranking-mode") {
       rankingMode = button.dataset.mode;
       content.innerHTML = renderRanking();
+    } else if (action === "open-add-friends") {
+      addFriendSearchTerm = "";
+      renderAddFriendsDialog();
+    } else if (action === "close-add-friends") {
+      addFriendsDialog.close();
     } else if (action === "add-friend") {
       const friend = suggestedFriends.find((suggestion) => suggestion.id === button.dataset.friendId);
       if (friend && !demoFriends.some((existing) => existing.name.toLowerCase() === friend.name.toLowerCase())) {
@@ -530,7 +552,9 @@
         try {
           localStorage.setItem("museum-rankings-demo-friends", JSON.stringify(demoFriends.filter((existing) => existing.id).map((existing) => existing.id)));
         } catch {}
-        friendSearchTerm = friend.name;
+        leaderboardSearchTerm = "";
+        addFriendSearchTerm = "";
+        addFriendsDialog.close();
         content.innerHTML = renderFriends();
         showToast(`${friend.name} added to your friends.`);
       }
@@ -562,14 +586,22 @@
     if (comparisonSession) event.preventDefault();
   });
 
+  addFriendsDialog.addEventListener("click", (event) => {
+    if (event.target === addFriendsDialog) addFriendsDialog.close();
+  });
+
   document.addEventListener("input", (event) => {
     if (event.target.id === "museum-search") {
       searchTerm = event.target.value;
       renderMuseumGrid();
-    } else if (event.target.id === "friends-search") {
-      friendSearchTerm = event.target.value;
-      const results = document.querySelector("#friends-results");
+    } else if (event.target.id === "leaderboard-search") {
+      leaderboardSearchTerm = event.target.value;
+      const results = document.querySelector("#leaderboard-results");
       if (results) results.innerHTML = renderLeaderboardResults();
+    } else if (event.target.id === "add-friend-search") {
+      addFriendSearchTerm = event.target.value;
+      const results = document.querySelector("#add-friend-results");
+      if (results) results.innerHTML = renderAddFriendResults();
     } else if (event.target.id === "ranking-friends-search") {
       rankingSearchTerm = event.target.value;
       const results = document.querySelector("#friend-ranking-results");

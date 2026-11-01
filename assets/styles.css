@@ -172,6 +172,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .average-value { color: var(--muted); font-size: 10px; }
 .ranking-search, .friend-search { display: block; width: min(100%, 400px); max-width: 400px; margin: 0 0 16px; }
 .friend-search .search-input { padding: 0 14px 0 39px; }
+.friend-add-search { display: block; width: min(100%, 400px); max-width: 400px; margin: 0 0 16px; }
+.add-friends-dialog { width: min(92vw, 500px); }
+.add-friends-dialog .friend-suggestions { grid-template-columns: 1fr; }
 .friend-suggestions { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; margin-top: 12px; }
 .friend-card { padding: 15px; border: 1px solid var(--line); border-radius: 9px; background: var(--white); }
 .friend-card.is-suggested { border-style: dashed; }
