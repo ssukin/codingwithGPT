@@ -315,10 +315,11 @@
 
   function renderProfile() {
     const displayName = escapeHtml(state.displayName);
-    return `${heading("Your space", "A little about you", "Make the app feel like yours. Your profile, saved list, visit history, and ranking stay in this browser.")}
-      <section class="profile-card"><p class="eyebrow">Private profile</p><h3>Welcome to your museum notebook.</h3><p>This first version does not use accounts. Your information is stored in this browser on this device. It will not follow you to another browser or sync with friends.</p><form class="profile-form" id="profile-form"><label class="field">What should we call you?<input name="displayName" type="text" maxlength="40" value="${displayName}" placeholder="Your name or nickname" autocomplete="nickname"></label><button class="button" type="submit">Save profile</button></form>
-      <div class="privacy-callout"><span aria-hidden="true">◈</span><span><strong>About your data</strong><br>For now, your list and notes remain in this browser's storage. Clearing browser data will erase them. Sign-in and cross-device sync can be added later.</span></div>
-      <div style="margin-top:22px"><button class="button danger small" type="button" data-action="clear-data">Clear my saved data</button></div></section>`;
+    return `<section class="profile-page"><h2>Sample Name Profile</h2>
+      <p>This first version does not use accounts. Your information is stored in this browser on this device. It will not follow you to another browser or sync with friends.</p>
+      <form class="profile-form" id="profile-form"><label class="field">What should we call you?<input name="displayName" type="text" maxlength="40" value="${displayName}" placeholder="Your name or nickname" autocomplete="nickname"></label><button class="button" type="submit">Save profile</button></form>
+      <p class="privacy-copy"><strong>About your data</strong><br>For now, your list and notes remain in this browser's storage. Clearing browser data will erase them. Sign-in and cross-device sync can be added later.</p>
+      <div class="profile-actions"><button class="button danger small" type="button" data-action="clear-data">Clear my saved data</button></div></section>`;
   }
 
   function renderView() {
