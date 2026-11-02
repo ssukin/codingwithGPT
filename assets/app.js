@@ -148,6 +148,10 @@
     return `<div class="section-heading"><div>${eyebrow ? `<p class="eyebrow">${escapeHtml(eyebrow)}</p>` : ""}<h2>${escapeHtml(title)}</h2>${description ? `<p>${escapeHtml(description)}</p>` : ""}</div>${buttonMarkup}</div>`;
   }
 
+  function searchField(id, placeholder, value, { label = placeholder, className = "" } = {}) {
+    return `<label class="search-box ${className}"><span class="visually-hidden">${escapeHtml(label)}</span><input class="search-input" id="${escapeHtml(id)}" type="search" placeholder="${escapeHtml(placeholder)}" value="${escapeHtml(value)}"></label>`;
+  }
+
   function filteredMuseums(view) {
     let list = museums;
     if (view === "wishlist" || (view === "discover" && discoverScope === "wishlist")) list = list.filter((museum) => state.wishlist.includes(museum.id));
@@ -181,7 +185,7 @@
       : emptyState("⌕", "No matches yet", "Try a different search or clear the topic filter.", "Clear filters", "clear-filters");
     return `${heading("", title, "")}
       <div class="collection-toolbar">${scopeToggle}</div>
-      <div class="toolbar"><label class="search-box"><input class="search-input" id="museum-search" type="search" placeholder="Search museums" value="${escapeHtml(searchTerm)}" aria-label="Search museums"></label>
+      <div class="toolbar">${searchField("museum-search", "Search museums", searchTerm)}
         <div class="filter-row" role="group" aria-label="Filter museums by category">${filters.map((filter) => `<button class="filter-chip ${activeCategory === filter ? "is-active" : ""}" type="button" data-action="category" data-category="${escapeHtml(filter)}" aria-pressed="${activeCategory === filter}">${escapeHtml(filter)}</button>`).join("")}</div>${viewToggle}
       </div>
       <p class="result-count" id="result-count">${list.length} museum${list.length === 1 ? "" : "s"}</p>
@@ -191,13 +195,13 @@
   function renderFriends() {
     const addFriendsButton = `<button class="button small" type="button" data-action="open-add-friends">Add friends</button>`;
     return `${heading("", "Leaderboard", "", addFriendsButton)}
-      <label class="search-box friend-search"><span class="visually-hidden">Search leaderboard friends</span><input class="search-input" id="leaderboard-search" type="search" placeholder="Search friends" value="${escapeHtml(leaderboardSearchTerm)}"></label>
+      ${searchField("leaderboard-search", "Search friends", leaderboardSearchTerm, { label: "Search leaderboard friends", className: "search-box--standalone" })}
       <div id="leaderboard-results">${renderLeaderboardResults()}</div>`;
   }
 
   function renderAddFriendsDialog() {
     addFriendsDialog.innerHTML = `<div class="dialog-inner"><button class="dialog-close" type="button" data-action="close-add-friends" aria-label="Close add friends">×</button><h2 class="dialog-heading" id="add-friends-title">Add friends</h2>
-      <label class="search-box friend-add-search"><span class="visually-hidden">Search people to add as friends</span><input class="search-input" id="add-friend-search" type="search" placeholder="Search people to add" value="${escapeHtml(addFriendSearchTerm)}"></label>
+      ${searchField("add-friend-search", "Search people to add", addFriendSearchTerm, { label: "Search people to add as friends", className: "search-box--standalone" })}
       <div id="add-friend-results">${renderAddFriendResults()}</div></div>`;
     addFriendsDialog.showModal();
     document.querySelector("#add-friend-search")?.focus();
@@ -294,7 +298,7 @@
     const modeToggle = `<div class="ranking-mode-toggle view-toggle" role="group" aria-label="Ranking views"><button class="${rankingMode === "mine" ? "is-active" : ""}" type="button" data-action="ranking-mode" data-mode="mine" aria-pressed="${rankingMode === "mine"}">My ranking</button><button class="${rankingMode === "friends" ? "is-active" : ""}" type="button" data-action="ranking-mode" data-mode="friends" aria-pressed="${rankingMode === "friends"}">Friends’ average</button></div>`;
     if (rankingMode === "friends") {
       return `${heading("", "Ranking", "")}${modeToggle}
-        <label class="search-box ranking-search"><span class="visually-hidden">Search museums</span><input class="search-input" id="ranking-friends-search" type="search" placeholder="Search museums" value="${escapeHtml(rankingSearchTerm)}"></label>
+        ${searchField("ranking-friends-search", "Search museums", rankingSearchTerm, { className: "search-box--standalone" })}
         <div id="friend-ranking-results">${renderFriendRankingResults()}</div>`;
     }
 
