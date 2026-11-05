@@ -122,6 +122,7 @@
       <div class="card-art ${museum.photo ? "has-photo" : ""}">
         ${museum.photo ? `<img class="card-photo" src="${escapeHtml(museum.photo)}" alt="" loading="lazy" decoding="async"><span class="photo-credit">Photo: <a href="${escapeHtml(museum.photoSource)}" target="_blank" rel="noopener noreferrer">${escapeHtml(museum.photoCredit)}</a> · <a href="${escapeHtml(museum.photoLicense)}" target="_blank" rel="noopener noreferrer">${escapeHtml(museum.photoLicenseLabel)}</a></span>` : `<span class="card-monogram" aria-hidden="true">${escapeHtml(museum.monogram)}</span><span class="card-icon" aria-hidden="true">${escapeHtml(museum.icon)}</span>`}
         <button class="save-toggle" type="button" data-action="toggle-save" data-id="${museum.id}" aria-label="${saved ? "Remove" : "Save"} ${escapeHtml(museum.shortName)} ${saved ? "from" : "to"} Want to visit" aria-pressed="${saved}">${saved ? "♥" : "♡"}</button>
+        ${visits ? `<span class="visited-badge"><span aria-hidden="true">✓</span> Visited</span>` : ""}
       </div>
       <div class="card-body">
         <div class="card-meta"><span>${escapeHtml(museum.category)}</span>${visits ? `<span>${visits} visit${visits === 1 ? "" : "s"}</span>` : ""}</div>

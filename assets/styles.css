@@ -116,6 +116,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .card-icon { position: absolute; z-index: 1; right: 25px; bottom: 16px; color: rgba(16,24,32,.72); font-size: 23px; }
 .save-toggle { position: absolute; z-index: 2; top: 11px; right: 11px; width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid rgba(16,24,32,.13); border-radius: 50%; background: rgba(255,255,255,.9); color: var(--ink); font-size: 17px; cursor: pointer; }
 .save-toggle[aria-pressed="true"] { border-color: var(--red); background: var(--red-soft); color: var(--red-ink); }
+.visited-badge { position: absolute; z-index: 2; top: 11px; left: 11px; display: inline-flex; align-items: center; gap: 5px; padding: 6px 10px; border: 1px solid rgba(255,255,255,.7); border-radius: 99px; background: #e5f3e9; color: #24553a; font-size: 11px; font-weight: 700; box-shadow: 0 1px 4px rgba(16,24,32,.12); }
 .card-body { padding: 14px 15px 13px; }
 .card-meta { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 8px; color: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
 .card-body h3 { min-height: 43px; margin: 0; font-family: var(--serif); font-size: 19px; font-weight: 400; letter-spacing: -.025em; line-height: 1.12; }
