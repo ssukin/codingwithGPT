@@ -165,7 +165,9 @@
     }
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
-      list = list.filter((museum) => `${museum.name} ${museum.shortName} ${museum.category} ${museum.area} ${museum.description}`.toLowerCase().includes(term));
+      list = list.filter((museum) => term.trim() === "history"
+        ? museum.name.toLowerCase().includes(term)
+        : `${museum.name} ${museum.shortName} ${museum.category} ${museum.area} ${museum.description}`.toLowerCase().includes(term));
     }
     return list;
   }
