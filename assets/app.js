@@ -24,9 +24,9 @@
   let toastTimer;
 
   let demoFriends = [
-    { name: "Alex", submittedVisits: 18, ranking: ["natural-history", "air-and-space", "american-history", "national-zoo"] },
-    { name: "Jordan", submittedVisits: 12, ranking: ["american-history", "african-american-history", "african-art", "natural-history"] },
-    { name: "Sam", submittedVisits: 9, ranking: ["national-zoo", "natural-history", "hirshhorn", "american-history"] }
+    { id: "alex", name: "Alex", submittedVisits: 18, ranking: ["natural-history", "air-and-space", "american-history", "national-zoo"] },
+    { id: "sam", name: "Sam", submittedVisits: 9, ranking: ["national-zoo", "natural-history", "hirshhorn", "american-history"] },
+    { id: "jordan", name: "Jordan", submittedVisits: 12, ranking: ["american-history", "african-american-history", "african-art", "natural-history"] }
   ];
   const suggestedFriends = [
     { id: "taylor", name: "Taylor", submittedVisits: 7, ranking: ["hirshhorn", "american-history", "natural-history", "african-art"] },
@@ -52,7 +52,10 @@
       return {
         displayName: typeof parsed.displayName === "string" ? parsed.displayName : "",
         wishlist: Array.isArray(parsed.wishlist) ? parsed.wishlist.filter((id) => byId.has(id)) : [],
-        visits: Array.isArray(parsed.visits) ? parsed.visits.filter((visit) => visit && byId.has(visit.museumId)) : [],
+        visits: Array.isArray(parsed.visits) ? parsed.visits.filter((visit) => visit && byId.has(visit.museumId)).map((visit) => ({
+          ...visit,
+          companionId: typeof visit.companionId === "string" ? visit.companionId : ""
+        })) : [],
         ranking: Array.isArray(parsed.ranking) ? parsed.ranking.filter((id) => byId.has(id)) : []
       };
     } catch {
@@ -86,6 +89,29 @@
 
   function visitCountFor(id) {
     return state.visits.filter((visit) => visit.museumId === id).length;
+  }
+
+  function visitDescription(visit) {
+    const parts = [dateLabel(visit.visitedOn)];
+    if (visit.note) parts.push(escapeHtml(visit.note));
+    const companion = demoFriends.find((friend) => friend.id === visit.companionId);
+    if (companion) parts.push(`Went with ${escapeHtml(companion.name)}`);
+    return parts.join(" · ");
+  }
+
+  function renderVisitFriendSuggestions(query = "") {
+    const normalizedQuery = query.trim().toLowerCase();
+    const featuredOrder = ["sam", "alex", "jordan"];
+    const friends = demoFriends
+      .filter((friend) => friend.id && friend.name.toLowerCase().includes(normalizedQuery))
+      .sort((first, second) => {
+        const firstOrder = featuredOrder.indexOf(first.id);
+        const secondOrder = featuredOrder.indexOf(second.id);
+        return (firstOrder < 0 ? featuredOrder.length : firstOrder) - (secondOrder < 0 ? featuredOrder.length : secondOrder);
+      });
+    return friends.length
+      ? friends.map((friend) => `<button class="friend-typeahead-option" type="button" role="option" data-action="select-visit-friend" data-friend-id="${escapeHtml(friend.id)}">${escapeHtml(friend.name)}</button>`).join("")
+      : `<p class="friend-typeahead-empty">No friends found.</p>`;
   }
 
   function updateHeader() {
@@ -289,7 +315,7 @@
       const visitPhoto = museum.photo
         ? `<a class="mini-art has-photo" href="${escapeHtml(museum.photoSource)}" target="_blank" rel="noopener noreferrer" aria-label="Photo by ${escapeHtml(museum.photoCredit)}, ${escapeHtml(museum.photoLicenseLabel)}. View source and usage terms."><img src="${escapeHtml(museum.photo)}" alt="" loading="lazy" decoding="async"><span aria-hidden="true">↗</span></a>`
         : `<span class="mini-art accent-${museum.accent}" aria-hidden="true">${escapeHtml(museum.monogram)}</span>`;
-      return `<article class="visit-row">${visitPhoto}<div><h3>${escapeHtml(museum.shortName)}</h3><p>${dateLabel(visit.visitedOn)}${visit.note ? ` · ${escapeHtml(visit.note)}` : ""}</p></div><div class="visit-row-actions"><button class="button ghost small" type="button" data-action="open-museum" data-id="${museum.id}">Details</button><button class="button ghost small" type="button" data-action="delete-visit" data-id="${visit.id}" data-museum-id="${museum.id}" aria-label="Delete visit to ${escapeHtml(museum.shortName)}">Remove</button></div></article>`;
+      return `<article class="visit-row">${visitPhoto}<div><h3>${escapeHtml(museum.shortName)}</h3><p>${visitDescription(visit)}</p></div><div class="visit-row-actions"><button class="button ghost small" type="button" data-action="open-museum" data-id="${museum.id}">Details</button><button class="button ghost small" type="button" data-action="delete-visit" data-id="${visit.id}" data-museum-id="${museum.id}" aria-label="Delete visit to ${escapeHtml(museum.shortName)}">Remove</button></div></article>`;
     }).join("");
     return `${heading("", "My visits", "", `<button class="button small" type="button" data-action="open-visit"><span class="icon" aria-hidden="true">＋</span> Log a visit</button>`)}
       ${sorted.length ? `<div class="visit-list">${rows}</div>` : emptyState("✦", "No visits yet", "Log a museum visit to see it here.", "Browse museums", "discover")}`;
@@ -308,7 +334,7 @@
     const pending = visitedIds.filter((id) => !state.ranking.includes(id));
     const rows = ranked.map((museum, index) => {
       const visits = state.visits.filter((visit) => visit.museumId === museum.id).sort((a, b) => b.visitedOn.localeCompare(a.visitedOn));
-      const visitHistory = visits.length ? `<details class="rank-visits"><summary>${visits.length} visit${visits.length === 1 ? "" : "s"}</summary><ul>${visits.map((visit) => `<li><span>${dateLabel(visit.visitedOn)}${visit.note ? ` · ${escapeHtml(visit.note)}` : ""}</span><button class="text-link" type="button" data-action="delete-visit" data-id="${visit.id}" data-museum-id="${museum.id}">Remove</button></li>`).join("")}</ul></details>` : "";
+      const visitHistory = visits.length ? `<details class="rank-visits"><summary>${visits.length} visit${visits.length === 1 ? "" : "s"}</summary><ul>${visits.map((visit) => `<li><span>${visitDescription(visit)}</span><button class="text-link" type="button" data-action="delete-visit" data-id="${visit.id}" data-museum-id="${museum.id}">Remove</button></li>`).join("")}</ul></details>` : "";
       return `<li class="rank-item"><span class="rank-number">${index + 1}</span><div class="rank-copy"><h3>${escapeHtml(museum.shortName)}</h3><p>${visits.length} visit${visits.length === 1 ? "" : "s"} · ${escapeHtml(museum.category)}</p>${visitHistory}</div><div class="rank-controls"><button type="button" data-action="move-rank" data-id="${museum.id}" data-direction="up" aria-label="Move ${escapeHtml(museum.shortName)} up" ${index === 0 ? "disabled" : ""}>↑</button><button type="button" data-action="move-rank" data-id="${museum.id}" data-direction="down" aria-label="Move ${escapeHtml(museum.shortName)} down" ${index === ranked.length - 1 ? "disabled" : ""}>↓</button></div></li>`;
     }).join("");
     const actions = `<div class="ranking-header-actions"><button class="button secondary small" type="button" data-action="open-visit"><span aria-hidden="true">＋</span> Log a visit</button>${ranked.length > 1 ? `<button class="button small" type="button" data-action="start-ranking">Compare again</button>` : ""}</div>`;
@@ -377,8 +403,8 @@
   function openVisitDialog(museumId = "") {
     if (museumDialog.open) museumDialog.close();
     const options = museums.map((museum) => `<option value="${museum.id}" ${museum.id === museumId ? "selected" : ""}>${escapeHtml(museum.shortName)}</option>`).join("");
-    visitDialog.innerHTML = `<div class="dialog-inner"><button class="dialog-close" type="button" data-action="close-dialog" aria-label="Close visit form">×</button><p class="eyebrow">Make a note of it</p><h2 class="dialog-heading" id="visit-dialog-title">Log a museum visit</h2><p class="dialog-subtitle">Add a date and note. You’ll rank this museum before you finish.</p>
-      <form class="visit-form" id="visit-form"><label class="field">Museum<select name="museumId" required><option value="" disabled ${museumId ? "" : "selected"}>Choose a museum</option>${options}</select></label><label class="field">When did you visit?<input type="date" name="visitedOn" value="${today}" max="${today}" required></label><label class="field">Anything you want to remember?<textarea name="note" maxlength="500" placeholder="An exhibit, a feeling, a moment… (optional)"></textarea></label><div class="dialog-footer-actions"><button class="button secondary" type="button" data-action="close-dialog">Cancel</button><button class="button" type="submit">Save visit</button></div></form></div>`;
+    visitDialog.innerHTML = `<div class="dialog-inner"><button class="dialog-close" type="button" data-action="close-dialog" aria-label="Close visit form">×</button><h2 class="dialog-heading" id="visit-dialog-title">Log a museum visit</h2><p class="dialog-subtitle">Add a date and note. You’ll rank this museum before you finish.</p>
+      <form class="visit-form" id="visit-form"><label class="field">Museum<select name="museumId" required><option value="" disabled ${museumId ? "" : "selected"}>Choose a museum</option>${options}</select></label><label class="field">When did you visit?<input type="date" name="visitedOn" value="${today}" max="${today}" required></label><div class="field"><label for="visit-friend-search">Who went with you?</label><div class="visit-friend-typeahead"><input id="visit-friend-search" type="search" placeholder="Search for friends" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="visit-friend-options"><input type="hidden" name="companionId" id="visit-companion-id"><div class="visit-friend-options" id="visit-friend-options" role="listbox" hidden></div></div><span>Only people on your friends list can be tagged.</span></div><label class="field">Anything you want to remember?<textarea name="note" maxlength="500" placeholder="An exhibit, a feeling, a moment… (optional)"></textarea></label><div class="dialog-footer-actions"><button class="button secondary" type="button" data-action="close-dialog">Cancel</button><button class="button" type="submit">Save visit</button></div></form></div>`;
     visitDialog.showModal();
   }
 
@@ -510,7 +536,19 @@
     if (action === "toggle-save") toggleSave(id);
     else if (action === "open-museum") openMuseum(id);
     else if (action === "open-visit") openVisitDialog(id || "");
-    else if (action === "close-dialog") button.closest("dialog").close();
+    else if (action === "select-visit-friend") {
+      const friend = demoFriends.find((existing) => existing.id === button.dataset.friendId);
+      const search = document.querySelector("#visit-friend-search");
+      const companion = document.querySelector("#visit-companion-id");
+      const suggestions = document.querySelector("#visit-friend-options");
+      if (friend && search && companion && suggestions) {
+        search.value = friend.name;
+        companion.value = friend.id;
+        search.focus();
+        suggestions.hidden = true;
+        search.setAttribute("aria-expanded", "false");
+      }
+    } else if (action === "close-dialog") button.closest("dialog").close();
     else if (action === "start-ranking") startRanking();
     else if (action === "move-rank") moveRank(id, button.dataset.direction);
     else if (action === "delete-visit") {
@@ -578,6 +616,12 @@
   }
 
   document.addEventListener("click", (event) => {
+    if (!event.target.closest(".visit-friend-typeahead")) {
+      const search = document.querySelector("#visit-friend-search");
+      const suggestions = document.querySelector("#visit-friend-options");
+      if (suggestions) suggestions.hidden = true;
+      if (search) search.setAttribute("aria-expanded", "false");
+    }
     const viewButton = event.target.closest("[data-view]");
     if (viewButton) {
       event.preventDefault();
@@ -597,7 +641,18 @@
   });
 
   document.addEventListener("input", (event) => {
-    if (event.target.id === "museum-search") {
+    if (event.target.id === "visit-friend-search") {
+      const search = event.target;
+      const companion = document.querySelector("#visit-companion-id");
+      const suggestions = document.querySelector("#visit-friend-options");
+      const selectedFriend = demoFriends.find((friend) => friend.id === companion?.value);
+      if (selectedFriend?.name.toLowerCase() !== search.value.trim().toLowerCase()) companion.value = "";
+      if (suggestions) {
+        suggestions.innerHTML = renderVisitFriendSuggestions(search.value);
+        suggestions.hidden = false;
+      }
+      search.setAttribute("aria-expanded", "true");
+    } else if (event.target.id === "museum-search") {
       searchTerm = event.target.value;
       renderMuseumGrid();
     } else if (event.target.id === "leaderboard-search") {
@@ -615,6 +670,30 @@
     }
   });
 
+  document.addEventListener("focusin", (event) => {
+    if (event.target.id === "visit-friend-search") {
+      const suggestions = document.querySelector("#visit-friend-options");
+      if (suggestions) {
+        suggestions.innerHTML = renderVisitFriendSuggestions(event.target.value);
+        suggestions.hidden = false;
+      }
+      event.target.setAttribute("aria-expanded", "true");
+    }
+  });
+
+  document.addEventListener("focusout", (event) => {
+    if (event.target.id !== "visit-friend-search") return;
+    window.setTimeout(() => {
+      const search = document.querySelector("#visit-friend-search");
+      const companion = document.querySelector("#visit-companion-id");
+      const suggestions = document.querySelector("#visit-friend-options");
+      if (!search || document.activeElement?.closest(".visit-friend-typeahead")) return;
+      if (!companion?.value) search.value = "";
+      if (suggestions) suggestions.hidden = true;
+      search.setAttribute("aria-expanded", "false");
+    }, 0);
+  });
+
   document.addEventListener("submit", (event) => {
     if (event.target.id === "visit-form") {
       event.preventDefault();
@@ -622,7 +701,9 @@
       const museumId = String(form.get("museumId"));
       const visitedOn = String(form.get("visitedOn"));
       const note = String(form.get("note") || "").trim();
-      state.visits.push({ id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`, museumId, visitedOn, note });
+      const selectedCompanionId = String(form.get("companionId") || "");
+      const companionId = demoFriends.some((friend) => friend.id === selectedCompanionId) ? selectedCompanionId : "";
+      state.visits.push({ id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`, museumId, visitedOn, note, companionId });
       if (!state.ranking.includes(museumId)) {
         if (state.ranking.length === 0) state.ranking.push(museumId);
         else comparisonSession = { mode: "insert", queue: [museumId], candidate: null, low: 0, high: 0, opponent: null };
