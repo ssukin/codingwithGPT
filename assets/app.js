@@ -14,7 +14,7 @@
 
   let state = loadState();
   let currentView = "discover";
-  let activeCategory = "All categories";
+  let activeCategory = "All";
   let searchTerm = "";
   let discoverScope = "all";
   let comparisonSession = null;
@@ -182,12 +182,14 @@
   function filteredMuseums(view) {
     let list = museums;
     if (view === "wishlist" || (view === "discover" && discoverScope === "wishlist")) list = list.filter((museum) => state.wishlist.includes(museum.id));
-    if (activeCategory !== "All categories") {
+    if (activeCategory !== "All") {
       const categoryMatch = activeCategory === "Art"
         ? (museum) => museum.category.startsWith("Art")
         : activeCategory === "History"
           ? (museum) => museum.category.includes("History")
-          : (museum) => museum.category.startsWith("Science");
+          : activeCategory === "Science"
+            ? (museum) => museum.category.startsWith("Science")
+            : (museum) => museum.id === "national-zoo" || museum.id === "natural-history";
       list = list.filter(categoryMatch);
     }
     if (searchTerm.trim()) {
@@ -201,7 +203,7 @@
     const isWish = view === "wishlist" || discoverScope === "wishlist";
     const title = "Discover museums";
     const list = filteredMuseums(view);
-    const filters = ["All categories", "Art", "History", "Science"];
+    const filters = ["All", "Art", "History", "Science", "Animals"];
     const scopeToggle = `<div class="collection-toggle view-toggle" role="group" aria-label="Museum list"><button class="${discoverScope === "all" ? "is-active" : ""}" type="button" data-action="museum-scope" data-scope="all" aria-pressed="${discoverScope === "all"}">All museums</button><button class="${discoverScope === "wishlist" ? "is-active" : ""}" type="button" data-action="museum-scope" data-scope="wishlist" aria-pressed="${discoverScope === "wishlist"}">Want to visit</button></div>`;
     const viewToggle = "";
     /* Temporarily hidden; restore when the map view is ready to return.
@@ -574,11 +576,11 @@
       refreshDirectory();
     } else if (action === "show-all-museums") {
       discoverScope = "all";
-      activeCategory = "All categories";
+      activeCategory = "All";
       searchTerm = "";
       refreshDirectory();
     } else if (action === "clear-filters") {
-      activeCategory = "All categories";
+      activeCategory = "All";
       searchTerm = "";
       refreshDirectory();
     } else if (action === "ranking-mode") {
@@ -606,7 +608,7 @@
       if (window.confirm("Clear your saved list, visits, ranking, and profile from this browser? This cannot be undone.")) {
         state = { displayName: "", wishlist: [], visits: [], ranking: [] };
         discoverScope = "all";
-        activeCategory = "All categories";
+        activeCategory = "All";
         searchTerm = "";
         saveState();
         setView("discover");
