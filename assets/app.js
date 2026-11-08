@@ -2,6 +2,7 @@
   "use strict";
 
   const STORAGE_KEY = "museum-rankings-v1";
+  const VISIT_NOTE_LIMIT = 500;
   const museums = window.MUSEUMS || [];
   const byId = new Map(museums.map((museum) => [museum.id, museum]));
   const content = document.querySelector("#view-content");
@@ -68,8 +69,11 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch {
       showToast("This browser could not save your changes. Check its storage settings.");
+      return false;
+    } finally {
+      updateHeader();
     }
-    updateHeader();
+    return true;
   }
 
   function escapeHtml(value) {
@@ -336,7 +340,14 @@
     const pending = visitedIds.filter((id) => !state.ranking.includes(id));
     const rows = ranked.map((museum, index) => {
       const visits = state.visits.filter((visit) => visit.museumId === museum.id).sort((a, b) => b.visitedOn.localeCompare(a.visitedOn));
-      const visitHistory = visits.length ? `<details class="rank-visits"><summary>${visits.length} visit${visits.length === 1 ? "" : "s"}</summary><ul>${visits.map((visit) => `<li><span>${visitDescription(visit)}</span><button class="text-link" type="button" data-action="delete-visit" data-id="${visit.id}" data-museum-id="${museum.id}">Remove</button></li>`).join("")}</ul></details>` : "";
+      const visitHistory = visits.length ? `<details class="rank-visits">
+        <summary>${visits.length} visit${visits.length === 1 ? "" : "s"}</summary>
+        <ul>${visits.map((visit) => `<li>
+          <span>${visitDescription(visit)}</span>
+          <button class="text-link" type="button" data-action="edit-visit-note" data-id="${escapeHtml(visit.id)}" aria-label="Edit note for ${escapeHtml(museum.shortName)} on ${dateLabel(visit.visitedOn)}">Edit note</button>
+          <button class="text-link" type="button" data-action="delete-visit" data-id="${visit.id}" data-museum-id="${museum.id}">Remove</button>
+        </li>`).join("")}</ul>
+      </details>` : "";
       return `<li class="rank-item"><span class="rank-number">${index + 1}</span><div class="rank-copy"><h3>${escapeHtml(museum.shortName)}</h3><p>${visits.length} visit${visits.length === 1 ? "" : "s"} · ${escapeHtml(museum.category)}</p>${visitHistory}</div><div class="rank-controls"><button type="button" data-action="move-rank" data-id="${museum.id}" data-direction="up" aria-label="Move ${escapeHtml(museum.shortName)} up" ${index === 0 ? "disabled" : ""}>↑</button><button type="button" data-action="move-rank" data-id="${museum.id}" data-direction="down" aria-label="Move ${escapeHtml(museum.shortName)} down" ${index === ranked.length - 1 ? "disabled" : ""}>↓</button></div></li>`;
     }).join("");
     const actions = `<div class="ranking-header-actions"><button class="button secondary small" type="button" data-action="open-visit"><span aria-hidden="true">＋</span> Log a visit</button>${ranked.length > 1 ? `<button class="button small" type="button" data-action="start-ranking">Compare again</button>` : ""}</div>`;
@@ -406,7 +417,30 @@
     if (museumDialog.open) museumDialog.close();
     const options = museums.map((museum) => `<option value="${museum.id}" ${museum.id === museumId ? "selected" : ""}>${escapeHtml(museum.shortName)}</option>`).join("");
     visitDialog.innerHTML = `<div class="dialog-inner"><button class="dialog-close" type="button" data-action="close-dialog" aria-label="Close visit form">×</button><h2 class="dialog-heading" id="visit-dialog-title">Log a museum visit</h2><p class="dialog-subtitle">Add a date and note. You’ll rank this museum before you finish.</p>
-      <form class="visit-form" id="visit-form"><label class="field">Museum<select name="museumId" required><option value="" disabled ${museumId ? "" : "selected"}>Choose a museum</option>${options}</select></label><label class="field">When did you visit?<input type="date" name="visitedOn" value="${today}" max="${today}" required></label><div class="field"><label for="visit-friend-search">Who went with you?</label><div class="visit-friend-typeahead"><input id="visit-friend-search" type="search" placeholder="Search for friends" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="visit-friend-options"><input type="hidden" name="companionId" id="visit-companion-id"><div class="visit-friend-options" id="visit-friend-options" role="listbox" hidden></div></div><span>Only people on your friends list can be tagged.</span></div><label class="field">Anything you want to remember?<textarea name="note" maxlength="500" placeholder="An exhibit, a feeling, a moment… (optional)"></textarea></label><div class="dialog-footer-actions"><button class="button secondary" type="button" data-action="close-dialog">Cancel</button><button class="button" type="submit">Save visit</button></div></form></div>`;
+      <form class="visit-form" id="visit-form"><label class="field">Museum<select name="museumId" required><option value="" disabled ${museumId ? "" : "selected"}>Choose a museum</option>${options}</select></label><label class="field">When did you visit?<input type="date" name="visitedOn" value="${today}" max="${today}" required></label><div class="field"><label for="visit-friend-search">Who went with you?</label><div class="visit-friend-typeahead"><input id="visit-friend-search" type="search" placeholder="Search for friends" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="visit-friend-options"><input type="hidden" name="companionId" id="visit-companion-id"><div class="visit-friend-options" id="visit-friend-options" role="listbox" hidden></div></div><span>Only people on your friends list can be tagged.</span></div><label class="field">Anything you want to remember?<textarea name="note" maxlength="${VISIT_NOTE_LIMIT}" placeholder="An exhibit, a feeling, a moment… (optional)"></textarea></label><div class="dialog-footer-actions"><button class="button secondary" type="button" data-action="close-dialog">Cancel</button><button class="button" type="submit">Save visit</button></div></form></div>`;
+    visitDialog.showModal();
+  }
+
+  function openVisitNoteEditor(visitId) {
+    const visit = state.visits.find((entry) => entry.id === visitId);
+    if (!visit) return;
+    const museum = byId.get(visit.museumId);
+
+    visitDialog.innerHTML = `<div class="dialog-inner">
+      <button class="dialog-close" type="button" data-action="close-dialog" aria-label="Close note editor">×</button>
+      <h2 class="dialog-heading" id="visit-dialog-title">Edit visit note</h2>
+      <p class="dialog-subtitle">${escapeHtml(museum.shortName)} · ${dateLabel(visit.visitedOn)}</p>
+      <form class="visit-form" id="edit-visit-note-form" data-visit-id="${escapeHtml(visitId)}">
+        <label class="field">Visit note (optional)<textarea name="note" aria-describedby="visit-note-limit visit-note-error" autofocus></textarea></label>
+        <small id="visit-note-limit">Up to ${VISIT_NOTE_LIMIT} characters.</small>
+        <div id="visit-note-error" role="alert"></div>
+        <div class="dialog-footer-actions">
+          <button class="button secondary" type="button" data-action="close-dialog">Cancel</button>
+          <button class="button" type="submit">Save note</button>
+        </div>
+      </form>
+    </div>`;
+    visitDialog.querySelector("textarea").value = visit.note ?? "";
     visitDialog.showModal();
   }
 
@@ -538,6 +572,7 @@
     if (action === "toggle-save") toggleSave(id);
     else if (action === "open-museum") openMuseum(id);
     else if (action === "open-visit") openVisitDialog(id || "");
+    else if (action === "edit-visit-note") openVisitNoteEditor(id);
     else if (action === "select-visit-friend") {
       const friend = demoFriends.find((existing) => existing.id === button.dataset.friendId);
       const search = document.querySelector("#visit-friend-search");
@@ -697,6 +732,39 @@
   });
 
   document.addEventListener("submit", (event) => {
+    if (event.target.id === "edit-visit-note-form") {
+      event.preventDefault();
+      const editor = event.target;
+      const field = editor.elements.note;
+      const error = editor.querySelector("#visit-note-error");
+      if (field.value.length > VISIT_NOTE_LIMIT) {
+        error.textContent = `Shorten your note to ${VISIT_NOTE_LIMIT} characters or fewer.`;
+        field.setAttribute("aria-invalid", "true");
+        field.focus();
+        return;
+      }
+
+      field.removeAttribute("aria-invalid");
+      const visitId = editor.dataset.visitId;
+      const visit = state.visits.find((entry) => entry.id === visitId);
+      if (!visit) return;
+      const previousNote = visit.note;
+      visit.note = field.value.trim();
+      if (!saveState()) {
+        visit.note = previousNote;
+        error.textContent = "Your note could not be saved in this browser. Try again.";
+        return;
+      }
+
+      visitDialog.close();
+      renderView();
+      const editButton = content.querySelector(`[data-action="edit-visit-note"][data-id="${CSS.escape(visitId)}"]`);
+      const visitHistory = editButton?.closest(".rank-visits");
+      if (visitHistory) visitHistory.open = true;
+      editButton?.focus();
+      showToast("Visit note saved.");
+      return;
+    }
     if (event.target.id === "visit-form") {
       event.preventDefault();
       const form = new FormData(event.target);
