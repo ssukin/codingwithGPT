@@ -389,11 +389,11 @@
 
   function toggleSave(id) {
     const detailWasOpen = museumDialog.open;
-    if (state.wishlist.includes(id)) {
-      state.wishlist = state.wishlist.filter((savedId) => savedId !== id);
+    const wasSaved = state.wishlist.includes(id);
+    state.wishlist = toggledWishlist(state.wishlist, id);
+    if (wasSaved) {
       showToast(`${byId.get(id).shortName} removed from Want to visit.`);
     } else {
-      state.wishlist = [...state.wishlist, id];
       showToast(`${byId.get(id).shortName} saved for later.`);
     }
     saveState();

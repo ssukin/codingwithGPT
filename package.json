@@ -1,0 +1,11 @@
+{
+  "name": "museum-rankings",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.cjs",
+    "test:unit": "node --test tests/wishlist.unit.test.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}
