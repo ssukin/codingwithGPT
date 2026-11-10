@@ -2,7 +2,7 @@
 
 function toggledWishlist(wishlist, museumId) {
   return wishlist.includes(museumId)
-    ? wishlist.filter((savedId) => savedId !== museumId)
+    ? wishlist.filter((savedId) => savedId === museumId)
     : [...wishlist, museumId];
 }
 
