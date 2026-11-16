@@ -19,10 +19,14 @@ The repository includes a GitHub Actions workflow for GitHub Pages. In the repos
 
 ## Pilot directory
 
-The initial directory covers 12 Smithsonian museum institutions in Washington, DC. Museum names, descriptions, locations, and official information links are based on the Smithsonian's [museum visitor directory](https://www.si.edu/visit/museums). Hours and admission requirements can change, so the app links back to official museum information.
+The initial directory covers 13 Smithsonian museum institutions in Washington, DC, including the National Zoo. Museum names, descriptions, locations, and official information links are based on the Smithsonian's [museum visitor directory](https://www.si.edu/visit/museums) and [National Zoo visitor information](https://nationalzoo.si.edu/visit). Hours and admission requirements can change, so the app links back to official museum information.
+
+Museum photos are from Wikimedia Commons. Each photo card shows its creator and links to its source and license; visit-list thumbnails link to the same usage details.
 
 ## Product scope
 
 The first web version includes the proposal's personal MVP: browse and search, museum details, a private Want to visit list, visit logging, head-to-head comparisons, and an editable ranking. Friends, map views, public sharing, recommendations, reviews, notifications, and monetization are deferred. Account sign-in and cross-device sync can be added in a later version.
 
 This repository is for Coding with GPT on Mondays and Tuesdays at 2:45–4:10 pm.
+
+This is an update (Gila).
