@@ -256,7 +256,7 @@
     const saved = visits === 0 && state.wishlist.includes(museum.id);
     const websiteLink = externalLink(
       museum.officialUrl,
-      `Details <span aria-hidden="true">↗</span>`,
+      `Website <span aria-hidden="true">↗</span>`,
       `class="card-detail" aria-label="${escapeHtml(museum.shortName)} website (opens in a new tab)"`
     );
     return `<article class="museum-card accent-${museum.accent}">
