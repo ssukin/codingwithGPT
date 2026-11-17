@@ -4,7 +4,7 @@ A museum discovery and personal ranking app for Smithsonian museums in Washingto
 
 ## Try the app
 
-Open `index.html` in a web browser. Search the directory, save museums to **Want to visit**, log visits, then compare and reorder your personal ranking.
+Open `index.html` in a web browser. Search and filter the directory, save museums to **Want to visit**, log visits, then compare and reorder your personal ranking.
 
 Your profile, saved list, visits, notes, and ranking are stored in this browser on this device. They do not sync to other devices. Clearing this browser's site data will erase them.
 
@@ -25,7 +25,7 @@ Museum photos are from Wikimedia Commons. Each photo card shows its creator and 
 
 ## Product scope
 
-The first web version includes the proposal's personal MVP: browse and search, museum details, a private Want to visit list, visit logging, head-to-head comparisons, and an editable ranking. Friends, map views, public sharing, recommendations, reviews, notifications, and monetization are deferred. Account sign-in and cross-device sync can be added in a later version.
+The first web version includes the proposal's personal MVP: browse, search, and filter (by status, category, and location), museum details with links to each museum's website, a private Want to visit list, visit logging, head-to-head comparisons, and an editable ranking. It also includes a demo friends Leaderboard, a friends' average ranking, and tagging friends on visits, using sample friends stored in this browser. Real friend accounts, map views, public sharing, recommendations, reviews, notifications, and monetization are deferred. Account sign-in and cross-device sync can be added in a later version.
 
 This repository is for Coding with GPT on Mondays and Tuesdays at 2:45–4:10 pm.
 
