@@ -157,7 +157,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .average-rank { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; border-radius: 50%; font: 17px var(--serif); }
 .average-value { color: var(--muted); font-size: 12px; }
 .add-friends-dialog { width: min(92vw, 500px); }
-.add-friends-dialog .friend-suggestions { grid-template-columns: 1fr; }
+.add-friends-dialog .friend-suggestions { grid-template-columns: 1fr; gap: 8px; margin-top: 0; }
+/* Add friends pop-up: full-width search and compact one-line results, like the Leaderboard rows. */
+.add-friends-dialog .search-box { width: 100%; margin-bottom: 12px; }
+.add-friends-dialog .friend-card.is-suggested { display: flex; align-items: center; gap: 12px; min-height: 62px; padding: 10px 12px 10px 16px; border-style: solid; }
+.add-friends-dialog .friend-heading { flex: 1; min-width: 0; gap: 10px; }
+.add-friends-dialog .friend-heading h3 { font-size: 18px; }
+.add-friends-dialog .friend-visit-count { margin-left: 0; }
+.add-friends-dialog .friend-card .button { flex: 0 0 auto; margin-top: 0; }
 .friend-suggestions { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; margin-top: 12px; }
 .friend-card { padding: 15px; border: 1px solid var(--line); border-radius: 9px; background: var(--white); }
 .friend-card.is-suggested { border-style: dashed; }

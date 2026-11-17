@@ -370,6 +370,7 @@
     addFriendsDialog.innerHTML = `<div class="dialog-inner">
       <button class="dialog-close" type="button" data-action="close-add-friends" aria-label="Close add friends">×</button>
       <h2 class="dialog-heading" id="add-friends-title">Add friends</h2>
+      <p class="dialog-subtitle">Search by name to find people and add them to your leaderboard.</p>
       ${searchField("add-friend-search", "Search people to add", addFriendSearchTerm, { label: "Search people to add as friends", className: "search-box--standalone" })}
       <div id="add-friend-results">${renderAddFriendResults()}</div>
     </div>`;
