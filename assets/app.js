@@ -180,7 +180,7 @@
         <p>${escapeHtml(museum.description)}</p>
         <div class="card-actions">
           <span class="card-address">${escapeHtml(museum.area)}</span>
-          <span class="card-action-links"><button class="card-detail" type="button" data-action="open-museum" data-id="${museum.id}">Details <span aria-hidden="true">↗</span></button><button class="card-log-visit" type="button" data-action="open-visit" data-id="${museum.id}">Log visit <span aria-hidden="true">＋</span></button></span>
+          <span class="card-action-links"><a class="card-detail" href="${escapeHtml(museum.officialUrl)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(museum.shortName)} official website (opens in a new tab)">Details <span aria-hidden="true">↗</span></a><button class="card-log-visit" type="button" data-action="open-visit" data-id="${museum.id}">Log visit <span aria-hidden="true">＋</span></button></span>
         </div>
       </div>
     </article>`;
@@ -431,8 +431,8 @@
   function openMuseum(id) {
     const museum = byId.get(id);
     if (!museum) return;
-    const saved = count === 0 && state.wishlist.includes(id);
     const count = visitCountFor(id);
+    const saved = count === 0 && state.wishlist.includes(id);
     museumDialog.innerHTML = `<div class="dialog-top-art accent-${museum.accent}" aria-hidden="true"><span class="dialog-monogram">${escapeHtml(museum.monogram)}</span><button class="dialog-close" type="button" data-action="close-dialog" aria-label="Close details">×</button></div>
       <div class="dialog-inner"><p class="eyebrow">${escapeHtml(museum.category)} · ${escapeHtml(museum.area)}</p><h2 id="museum-dialog-title">${escapeHtml(museum.name)}</h2><p class="dialog-description">${escapeHtml(museum.description)}</p>
       <div class="museum-facts"><div class="museum-fact"><span aria-hidden="true">⌖</span><span>${escapeHtml(museum.address)}</span></div><div class="museum-fact"><span aria-hidden="true">✦</span><span>${count ? `${count} visit${count === 1 ? "" : "s"} in your history` : "Not visited yet"}</span></div><div class="museum-fact"><span aria-hidden="true">↗</span><a href="${museum.officialUrl}" target="_blank" rel="noopener noreferrer">Official museum information</a></div></div>

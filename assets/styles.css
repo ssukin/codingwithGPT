@@ -87,12 +87,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .search-box::before { content: "⌕"; position: absolute; top: 50%; left: 13px; color: var(--blue-dark); font-size: 20px; line-height: 1; transform: translateY(-50%); pointer-events: none; }
 .search-input { width: 100%; height: var(--control-height); padding: 0 14px 0 39px; border: 1px solid var(--line); border-radius: var(--control-radius); background: rgba(255,255,255,.9); color: var(--ink); font-size: 12px; }
 .search-box--standalone { display: block; margin: 0 0 16px; }
-.filter-row { display: flex; gap: 7px; overflow-x: auto; padding: 2px 1px; }
 .filter-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .filter-by-label { color: var(--muted); font-size: 11px; }
 .directory-filter { min-height: var(--control-height); max-width: 170px; padding: 0 28px 0 10px; border: 1px solid var(--line); border-radius: var(--control-radius); background: rgba(255,255,255,.9); color: var(--ink-soft); font-size: 11px; }
-.filter-chip { min-height: var(--control-height-small); padding: 0 12px; border: 1px solid var(--line); border-radius: 99px; background: transparent; color: var(--muted); font-size: 10px; font-weight: 700; white-space: nowrap; cursor: pointer; }
-.filter-chip:hover, .filter-chip.is-active { border-color: var(--blue); background: var(--paper-deep); color: var(--green-dark); }
 .result-count { margin: 0 0 12px; color: var(--muted); font-size: 11px; }
 .museum-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 15px; }
 .map-frame { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--paper-deep); }
@@ -127,7 +124,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .card-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding-top: 10px; border-top: 1px solid var(--paper-deep); }
 .card-action-links { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 10px; }
 .card-address { max-width: 36%; overflow: hidden; color: var(--muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
-.card-detail { padding: 0; border: 0; background: transparent; color: var(--green); font-size: 10px; font-weight: 700; cursor: pointer; }
+.card-detail { padding: 0; border: 0; background: transparent; color: var(--green); font-size: 10px; font-weight: 700; text-decoration: none; cursor: pointer; }
 .card-detail:hover { color: var(--orange); }
 .card-log-visit { min-height: 30px; padding: 0 10px; border: 1px solid var(--green); border-radius: 5px; background: transparent; color: var(--green-dark); font-size: 10px; font-weight: 700; cursor: pointer; }
 .card-log-visit:hover { background: var(--paper-deep); }
@@ -271,7 +268,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .section-heading h2 { font-size: 34px; }
   .toolbar { align-items: stretch; }
   .directory-actions { width: 100%; justify-content: space-between; margin-left: 0; }
-  .filter-row { order: 2; }
   .search-box { width: 100%; }
   .museum-map { min-height: 350px; height: 58vh; }
   .friend-suggestions { grid-template-columns: 1fr; }
