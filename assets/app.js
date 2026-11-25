@@ -80,9 +80,10 @@
     return [...new Set(ids)].filter((id) => typeof id === "string");
   }
 
-  function saveState() {
+  function saveState(nextState = state) {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
+      state = nextState;
     } catch {
       showToast("This browser could not save your changes. Check its storage settings.");
       return false;
@@ -652,6 +653,7 @@
         </div>
         <label class="field">Anything you want to remember?<textarea name="note" maxlength="${VISIT_NOTE_LIMIT}"
           placeholder="An exhibit, a feeling, a moment… (optional)"></textarea></label>
+        <span class="visit-save-error" role="alert"></span>
         <div class="dialog-footer-actions">
           <button class="button secondary" type="button" data-action="close-dialog">Cancel</button>
           <button class="button" type="submit">Save visit</button>
@@ -1019,13 +1021,23 @@
       const note = String(form.get("note") || "").trim();
       const companionIds = selectedFriendIds(selectedVisitCompanionIds, demoFriends);
       const visitId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
-      state.visits.push({ id: visitId, museumId, visitedOn, note, companionIds });
-      state.wishlist = state.wishlist.filter((id) => id !== museumId);
-      if (!state.ranking.includes(museumId)) {
-        if (state.ranking.length === 0) state.ranking.push(museumId);
-        else comparisonSession = { mode: "insert", queue: [museumId], candidate: null, low: 0, high: 0, opponent: null };
+      const visit = { id: visitId, museumId, visitedOn, note, companionIds };
+      const firstMuseum = state.ranking.length === 0;
+      const needsComparison = !firstMuseum && !state.ranking.includes(museumId);
+      const saved = saveState({
+        ...state,
+        visits: [...state.visits, visit],
+        wishlist: state.wishlist.filter((id) => id !== museumId),
+        ranking: firstMuseum ? [museumId] : state.ranking
+      });
+      if (!saved) {
+        event.target.querySelector(".visit-save-error").textContent =
+          "Your visit could not be saved. Check browser storage and try again.";
+        return;
       }
-      saveState();
+      if (needsComparison) {
+        comparisonSession = { mode: "insert", queue: [museumId], candidate: null, low: 0, high: 0, opponent: null };
+      }
       visitDialog.close();
       if (museumDialog.open) museumDialog.close();
       renderView();

@@ -62,6 +62,7 @@ test("system: reject unknown friends, recover a failed save, and recall Sam afte
   const save = page.getByRole("button", { name: "Save visit", exact: true });
   await save.click();
   assert.equal(await save.isVisible(), true, "Keep the visit form open when the write fails");
+  assert.match(await page.getByRole("alert").innerText(), /visit could not be saved/i);
   const beforeRetry = await page.evaluate(key => JSON.parse(localStorage.getItem(key)), key);
   assert.deepEqual(beforeRetry.wishlist, ["american-history"]);
   assert.equal(beforeRetry.visits.length, 0);
