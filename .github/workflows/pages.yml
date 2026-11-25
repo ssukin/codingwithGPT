@@ -15,11 +15,15 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Verify visit storage and friend tagging
+      # Unit (rules), integration (stored visits) and system (browser) tests for the charter's stories.
+      # A failure here stops the deploy below.
+      - name: Run story tests
         run: npm test
 
   publish:
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    # Deploys only from main, only after the tests pass, and only once Pages is turned on for the repo
+    # (Settings → Pages → GitHub Actions, then set the repository variable PAGES_ENABLED to true).
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.PAGES_ENABLED == 'true'
     needs: story-tests
     permissions:
       contents: read
@@ -35,10 +39,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
-      - name: Stage the static site
+      # Publish only the museum app; the other files in the repo are earlier class exercises.
+      - name: Stage the museum app
         run: |
           mkdir site
-          cp -r assets *.html site/
+          cp -r assets index.html site/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

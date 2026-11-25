@@ -2,7 +2,7 @@
   "name": "museum-rankings",
   "private": true,
   "scripts": {
-    "test": "node --test tests/visit-model.test.cjs tests/visit-browser.test.cjs"
+    "test": "node --test tests/rules.test.cjs tests/visit-model.test.cjs tests/visit-browser.test.cjs tests/ranking-browser.test.cjs"
   },
   "devDependencies": {
     "playwright-core": "1.56.1"
