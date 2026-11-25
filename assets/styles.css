@@ -221,6 +221,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .compare-choice .choice-icon { width: 57px; height: 57px; display: grid; place-items: center; border-radius: 50%; background: var(--card-bg); color: var(--green-dark); font-family: var(--serif); font-size: 21px; }
 .compare-choice strong { max-width: 190px; font-family: var(--serif); font-size: 18px; font-weight: 400; line-height: 1.15; }
 .versus { align-self: center; color: #97a097; font-size: 12px; font-weight: 700; letter-spacing: .08em; }
+.compare-hint { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; text-align: center; }
+.sample-tag { margin-left: 6px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-family: inherit; font-size: 10px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; vertical-align: middle; }
+.pilot-log { margin-top: 18px; }
+.pilot-log-counts { margin: 8px 0 12px; padding-left: 18px; color: var(--ink-soft); font-size: 12px; line-height: 1.6; }
 .toast { position: fixed; z-index: 50; right: 22px; bottom: 22px; max-width: min(380px, calc(100vw - 44px)); padding: 12px 16px; border: 1px solid rgba(255,255,255,.16); border-radius: 8px; background: var(--ink); color: white; font-size: 12px; opacity: 0; pointer-events: none; transform: translateY(10px); transition: opacity .18s ease, transform .18s ease; }
 .toast.is-visible { opacity: 1; transform: translateY(0); }
 

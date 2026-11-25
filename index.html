@@ -10,8 +10,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/styles.css">
+  <!-- Model and rules first (no DOM), then views and dialogs, then app.js wires the events. -->
   <script src="assets/museums.js" defer></script>
+  <script src="assets/sample-friends.js" defer></script>
+  <script src="assets/filters.js" defer></script>
+  <script src="assets/ranking.js" defer></script>
+  <script src="assets/events.js" defer></script>
   <script src="assets/visit-friends.js" defer></script>
+  <script src="assets/store.js" defer></script>
+  <script src="assets/ui-core.js" defer></script>
+  <script src="assets/ui-discover.js" defer></script>
+  <script src="assets/ui-ranking.js" defer></script>
+  <script src="assets/ui-dialogs.js" defer></script>
   <script src="assets/app.js" defer></script>
 </head>
 <body>
@@ -46,7 +56,6 @@
     </footer>
   </div>
 
-  <dialog class="dialog museum-dialog" id="museum-dialog" aria-labelledby="museum-dialog-title"></dialog>
   <dialog class="dialog visit-dialog" id="visit-dialog" aria-labelledby="visit-dialog-title"></dialog>
   <dialog class="dialog compare-dialog" id="compare-dialog" aria-labelledby="compare-dialog-title"></dialog>
   <dialog class="dialog add-friends-dialog" id="add-friends-dialog" aria-labelledby="add-friends-title"></dialog>
