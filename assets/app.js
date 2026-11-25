@@ -1017,7 +1017,7 @@
       const museumId = String(form.get("museumId"));
       const visitedOn = String(form.get("visitedOn"));
       const note = String(form.get("note") || "").trim();
-      const companionIds = [...new Set(selectedVisitCompanionIds)].filter((id) => demoFriends.some((friend) => friend.id === id));
+      const companionIds = selectedFriendIds(selectedVisitCompanionIds, demoFriends);
       const visitId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
       state.visits.push({ id: visitId, museumId, visitedOn, note, companionIds });
       state.wishlist = state.wishlist.filter((id) => id !== museumId);
